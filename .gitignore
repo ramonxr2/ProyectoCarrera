@@ -1,0 +1,24 @@
+# Archivos auxiliares de LaTeX
+out/
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.nlo
+*.nls
+*.ilg
+*.lof
+*.lot
+*.out
+*.toc
+*.synctex.gz
+
+# Solo se versiona el PDF final de build/
+build/*
+!build/Main.pdf
+
+# Copias locales y material de referencia del curso
+Claude outputs/
+Formato_Antecedentes_Ejemplo.pdf

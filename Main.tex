@@ -1,0 +1,73 @@
+% CREATED BY DAVID FRISK, 2018
+
+% IMPORT SETTINGS
+\documentclass[12pt,a4paper,twoside,openright]{report}
+\input{include/settings/Settings}
+
+\begin{document} 
+
+% COVER PAGE, TITLE PAGE AND IMPRINT PAGE
+\pagenumbering{roman}			% Roman numbering (starting with i (one)) until first main chapter
+\input{include/frontmatter/Titlepage}
+
+% ABSTRACT
+
+%\input{include/frontmatter/Abstract}
+
+% ACKNOWLEDGEMENTS
+%\newpage				% Create empty back of side
+%\input{include/frontmatter/Dedicatoria}
+%\newpage				% Create empty back of side
+%\input{include/frontmatter/Agradecimientos}
+
+
+% TABLE OF CONTENTS
+
+%\tableofcontents
+%\renewcommand{\tablename}{Tabla} 
+%\renewcommand{\listtablename}{Índice de tablas} 
+% OTHER FRONTMATTER
+% List of figures (add to table of contents)
+%\cleardoublepage
+%\listoffigures
+% List of tables (add to table of contents)
+%\cleardoublepage
+%\listoftables
+%\printnomenclature
+
+% START OF MAIN DOCUMENT
+\cleardoublepage
+\setcounter{page}{1}
+\pagenumbering{arabic}			% Arabic numbering starting from 1 (one)
+\setlength{\parskip}{0pt plus 1pt}
+
+% INTRODUCTION
+\input{include/1_Introduction/Introduction}
+
+% THEORY
+%\input{include/2_MTeorico/Mteorico}
+
+% METHODS
+%\input{include/3_Metodos/Metodos}
+
+% RESULTS
+%\input{include/4_Resultados/Resultados}
+
+% CONCLUSION
+%\input{include/5_Conclusiones/Conclusiones}
+
+% REFERENCES / BIBLIOGRAPHY
+\cleardoublepage 
+\bibliographystyle{abbrvnat}
+\bibliography{include/backmatter/references}
+
+% APPENDICES
+\cleardoublepage
+\appendix
+\setcounter{page}{1}
+\pagenumbering{Roman}			% Capitalized roman numbering starting from I (one)
+
+\input{include/backmatter/1_Appendix/Appendix_1}
+
+
+\end{document}

@@ -1,110 +1,1488 @@
-% CREATED BY DAVID FRISK, 2018
 \chapter{Marco teórico}
 
-Un marco conceptual es una herramienta analítica con variaciones y contextos. Se puede aplicar en diferentes categorías de trabajo donde se necesita una imagen general. Se usa para hacer distinciones conceptuales y organizar ideas.
+Este capítulo reúne los fundamentos necesarios para comprender y sustentar
+el sistema propuesto. Se parte de la base botánica del problema —qué es una
+variedad de vid y qué rasgos de la hoja permiten distinguirla— y se avanza
+hacia las herramientas computacionales que hacen posible automatizar esa
+distinción: el procesamiento digital de imágenes, las redes neuronales
+artificiales y, en particular, las redes convolucionales y sus variantes
+ligeras. Posteriormente se establecen los criterios con los que se mide el
+desempeño de un clasificador, incluyendo el problema de la generalización
+fuera del dominio de entrenamiento, y finalmente se describen las
+plataformas y técnicas que permiten ejecutar estos modelos en dispositivos
+con recursos limitados.
 
-\section{Ejemplos}
-En esta sección se muestran algunos ejemplos de la utilización de latex.
-    \subsection{Figura}
-    En esta subsección se muestra como se realiza una referencia cruzada a una imagen, por ejemplo la de la figura \ref{grafica}.
-    
-    \begin{figure}[H]
-    \centering
-    \includegraphics[scale=0.5]{include/2_MTeorico/Figures/primOrden.png}
-    \caption{Modelo de primer orden para diferentes constantes de tiempo.}
-    \label{grafica}
-    \end{figure}
+% =====================================================================
+\section{Viticultura y ampelografía}
+% =====================================================================
 
-    \subsection{Ecuaciónes}
-    En esta subsección se muestra el uso de ecuaciones con latex, como la de la ecuación \ref{ecuacionej}.
-    \begin{equation}
-    \min_{u} f_{objetivo} = \sum_{i}(y_{i}- \hat y_{i})^{2}
-    \label{ecuacionej}
-    \end{equation}
+\subsection{La vid y el concepto de variedad}
 
-    \subsection{Tablas}
-    En esta subsección se muestra el uso de tablas con latex, como la de la tabla \ref{tablaEj}.
-    \begin{table}[H]
-    \centering
-    \caption{Valores de $f(t)$ para $t=0,1,\dots 5$.}
-    \begin{tabular}{l|llllll} \hline\hline
-    $t$ & 0 & 1 & 2 & 3 & 4 & 5 \\ \hline
-    $f(t)$ & 1 & 1 & 4 & 9 & 16 & 25 \\ \hline\hline
-    \end{tabular}
-    \label{tablaEj}
-    \end{table}
+La vid europea, \textit{Vitis vinifera} L., es la especie del género
+\textit{Vitis} de mayor importancia económica y la base de prácticamente
+toda la producción mundial de vino. Dentro de la especie se reconocen miles
+de \textbf{variedades} o \textbf{cultivares}: poblaciones de plantas
+genéticamente distintas que se propagan de forma vegetativa —mediante
+estacas o injertos— y no por semilla. Esta propagación clonal es la razón
+por la que todos los individuos de una variedad comparten esencialmente el
+mismo genotipo, y por la que las diferencias morfológicas entre variedades
+se mantienen estables a lo largo del tiempo.
 
-    \subsection{Listas}
-     En esta subsección se muestra el uso de Listas con latex, como la que se muestra a continuación.
-    \begin{enumerate}
-    \item Primera
-    \begin{enumerate}
-        \item Sub primero
-        \item Sub Segundo
-    \end{enumerate}
-    \item Segunda
-    \item Tercera 
-    \item \dots
-    \end{enumerate}
+Es importante distinguir tres niveles. La \textbf{variedad} es la unidad de
+identificación: Syrah, Tempranillo o Misión. El \textbf{clon} es una
+selección dentro de una variedad, originada por mutaciones somáticas
+acumuladas, que conserva la identidad varietal pero puede diferir en
+aspectos agronómicos. El \textbf{sinónimo} es un nombre distinto para la
+misma variedad, generalmente de origen regional. La sinonimia es
+particularmente relevante para este proyecto: Tempranillo se denomina Tinta
+Roriz o Aragonez en Portugal, Syrah se conoce como Shiraz en Australia, y la
+variedad Misión, introducida en América por las misiones españolas,
+corresponde genéticamente a la variedad española Listán Prieto, conocida
+como País en Chile y Criolla Chica en Argentina \citep{tapia2007}. Un
+sistema de clasificación que integre conjuntos de datos de distintos países
+debe homologar estos nombres antes del entrenamiento, pues de lo contrario
+la misma variedad aparecería como dos clases distintas.
 
-    \subsection{Lista de codigo fuente}
-    En esta subsección se muestra el uso listas de códigos de programación con latex, como el que se muestra a continuación.
-    \begin{lstlisting}
-    #include <stdio.h>
-    int main()
-    {
-        int i;
-        for (i = 0; i < 10; i++)
-        {
-        printf("Hello world!");
-        }
-    return 0;
-    }
-    \end{lstlisting}
+\subsection{Ampelografía y descriptores morfológicos}
 
-    \subsection{Recursos}
-    Codecogs, un minieditor para compartir los resultados hasta como imagen.
-    \begin{figure}[H]
-    \centering
-    \includegraphics[scale=0.8]{include/2_MTeorico/Figures/codecogs.jpg}
-    \caption{Captura minieditor de ecuaciones en linea Codecogs.}
-    \end{figure}
-    Con LaTeX Table Generador se puede hacer todo lo anterior visualmente partiendo de unos datos importados tanto de un archivo de texto como desde hojas de cálculo (copiando y pegando).
-    \begin{figure}[H]
-    \centering
-    \includegraphics[scale=0.8]{include/2_MTeorico/Figures/latex-table-generator.jpg}
-    \caption{Captura de la herramienta LaTeX Table Generator. }
-    \end{figure}
-    
-    \subsection{Uso y ejemplo de secciones}
-    En la tabla \ref{tablaSec} se muestra el uso de los niveles de las secciones.
-    \begin{table}[H]
-   
-    \centering
-    \caption{Uso de las secciones en el documento.}
-    \begin{tabular}{ll} \hline\hline
-    Name & Command\\ \hline
-    Chapter & \textbackslash\texttt{chapter\{\emph{Chapter name}\}}\\
-    Section & \textbackslash\texttt{section\{\emph{Section name}\}}\\
-    Subsection & \textbackslash\texttt{subsection\{\emph{Subsection name}\}}\\
-    Subsubsection & \textbackslash\texttt{subsubsection\{\emph{Subsubsection name}\}}\\
-    Paragraph & \textbackslash\texttt{paragraph\{\emph{Paragraph name}\}}\\
-    Subparagraph & \textbackslash\texttt{paragraph\{\emph{Subparagraph name}\}}\\ \hline\hline
-    \end{tabular}
-    \label{tablaSec}
-    \end{table}
-    
-    
+La \textbf{ampelografía} es la disciplina que identifica y describe las
+variedades de vid a partir de sus caracteres morfológicos. Tradicionalmente
+se apoya en la observación de cuatro órganos: el pámpano joven, la hoja
+adulta, el racimo y la baya. De estos, la hoja adulta es el más utilizado,
+por tres razones: está disponible durante buena parte del ciclo vegetativo,
+es plana y por tanto fácil de fotografiar sin deformación, y concentra un
+número elevado de caracteres discriminantes.
 
-    \subsection{Nomenclatura}
-    Aquí se incluye una nomencladura.
-    \nomenclature{$\mathbb{R}$}{Real Numbers}
-    \nomenclature{$\mathbb{C}$}{Complex Numbers}
-    \nomenclature{$\mathbb{H}$}{Quaternions}
-    
-     \subsection{Citas}
-    Este es un ejemplo de una cita \cite{NAKASUKA2004919}.
-    \cite{einstein}.
+Para que las descripciones sean comparables entre instituciones y países, la
+Organización Internacional de la Viña y el Vino publica una lista
+normalizada de descriptores \citep{oiv2009, oiv2023}. Cada descriptor recibe
+un código numérico y una escala de valores. Los descriptores se dividen en
+dos familias. Los \textbf{descriptores cualitativos u ordinales} —por
+ejemplo, la forma del limbo, el número de lóbulos, el grado de apertura del
+seno peciolar o la densidad de pelos en el envés— se evalúan por comparación
+visual contra ilustraciones de referencia y se expresan en escalas
+discretas, típicamente de 1 a 9. Los \textbf{descriptores ampelométricos},
+agrupados en la serie 600 de la lista, son mediciones cuantitativas
+realizadas sobre la hoja; la Tabla~\ref{tab:oiv} resume los principales.
 
+\begin{longtable}{L{1.6cm}L{12.4cm}}
+\caption{Descriptores ampelométricos de la hoja adulta según la lista de la
+OIV \citep{oiv2023}.}
+\label{tab:oiv} \\
+\toprule
+\textbf{Código} & \textbf{Descriptor} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Código} & \textbf{Descriptor} \\
+\midrule
+\endhead
+OIV 601--604 & Longitud de las nervaduras N1 a N4 \\
+OIV 605 & Longitud del seno peciolar al seno lateral superior \\
+OIV 606 & Longitud del seno peciolar al seno lateral inferior \\
+OIV 607--609 & Ángulos entre nervaduras consecutivas (N1--N2, N2--N3, N3--N4), medidos en la primera ramificación \\
+OIV 610 & Ángulo entre N3 y la tangente entre el punto peciolar y la punta del diente de N5 \\
+OIV 611 & Longitud de la nervadura N5 \\
+OIV 612--615 & Longitud y anchura de los dientes de N2 y N4 \\
+OIV 616 & Número de dientes entre la punta del diente de N2 y la de la primera nervadura secundaria de N2 \\
+OIV 617 & Longitud entre esas dos puntas de diente \\
+OIV 618 & Apertura o superposición del seno peciolar \\
+\bottomrule
+\end{longtable}
 
+La Figura~\ref{fig:hoja} muestra la anatomía de una hoja adulta de vid con
+los elementos que sirven de base a estos descriptores. La hoja es palmada y
+típicamente pentalobulada: presenta un lóbulo central terminado en la
+nervadura principal N1, dos lóbulos laterales superiores asociados a las
+nervaduras N2 y dos lóbulos laterales inferiores asociados a las nervaduras
+N3. Entre los lóbulos se abren los \textbf{senos laterales}, y en la base,
+donde se inserta el pecíolo, se encuentra el \textbf{seno peciolar}, cuya
+forma y grado de apertura constituyen uno de los caracteres más
+discriminantes entre variedades.
 
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=1.05,
+    vena/.style={draw=green!35!black, line width=0.9pt},
+    vena2/.style={draw=green!35!black, line width=0.6pt},
+    etq/.style={font=\footnotesize},
+    flecha/.style={-{Latex[length=1.6mm]}, thin, draw=black!70}
+]
+% Contorno de la hoja
+\draw[fill=green!12, draw=green!45!black, line width=1pt]
+  plot[smooth, tension=0.7] coordinates {
+    (0,0) (0.45,0.22) (1.15,0.45)
+    (3.05,1.45) (2.15,1.95)
+    (2.00,3.35) (0.80,2.95)
+    (0,4.20)
+    (-0.80,2.95) (-2.00,3.35)
+    (-2.15,1.95) (-3.05,1.45)
+    (-1.15,0.45) (-0.45,0.22) (0,0)
+  } -- cycle;
+
+% Nervaduras principales
+\draw[vena] (0,0) -- (0,4.05);
+\draw[vena] (0,0) -- (1.92,3.20);
+\draw[vena] (0,0) -- (-1.92,3.20);
+\draw[vena] (0,0) -- (2.92,1.42);
+\draw[vena] (0,0) -- (-2.92,1.42);
+\draw[vena2] (0,0) -- (1.10,0.48);
+\draw[vena2] (0,0) -- (-1.10,0.48);
+% Peciolo
+\draw[vena, line width=1.3pt] (0,0) -- (0,-0.85);
+
+% Etiquetas de nervaduras
+\node[etq] at (0.22,3.55) {N1};
+\node[etq] at (1.55,2.95) {N2};
+\node[etq] at (2.55,1.55) {N3};
+\node[etq] at (1.05,0.72) {N5};
+\node[etq] at (-1.55,2.95) {N2};
+\node[etq] at (-2.55,1.55) {N3};
+
+% Anotaciones
+\node[etq, anchor=west] at (2.9,3.9) {Lóbulo lateral superior};
+\draw[flecha] (2.85,3.85) -- (2.05,3.35);
+\node[etq, anchor=west] at (2.9,3.2) {Seno lateral superior};
+\draw[flecha] (2.85,3.15) -- (0.90,2.95);
+\node[etq, anchor=west] at (3.3,2.15) {Seno lateral inferior};
+\draw[flecha] (3.25,2.10) -- (2.20,1.95);
+\node[etq, anchor=west] at (3.3,1.15) {Lóbulo lateral inferior};
+\draw[flecha] (3.25,1.20) -- (3.00,1.44);
+\node[etq, anchor=south] at (0,4.35) {Lóbulo central (ápice)};
+\node[etq, anchor=east] at (-3.3,0.55) {Seno peciolar};
+\draw[flecha] (-3.25,0.55) -- (-0.55,0.20);
+\node[etq, anchor=east] at (-1.1,-0.75) {Pecíolo};
+\draw[flecha] (-1.05,-0.75) -- (-0.05,-0.70);
+\end{tikzpicture}
+\caption{Esquema de la hoja adulta de vid y elementos morfológicos que
+sustentan los descriptores ampelográficos. El borde dentado se omite por
+claridad.}
+\label{fig:hoja}
+\end{figure}
+
+La ampelografía presenta tres limitaciones que motivan su automatización.
+Primero, requiere un especialista con formación específica, un recurso
+escaso. Segundo, los caracteres deben observarse en momentos concretos del
+ciclo vegetativo, cuando la hoja ha alcanzado su desarrollo completo.
+Tercero, la expresión morfológica está influida por el ambiente, el estado
+sanitario de la planta y la variabilidad clonal, de modo que dos hojas de la
+misma variedad cultivadas en sitios distintos pueden diferir de forma
+apreciable. Esta última limitación es especialmente relevante para el
+presente proyecto, porque es el fundamento botánico del fenómeno que en
+aprendizaje automático se denomina cambio de dominio y que se aborda en la
+sección~\ref{sec:generalizacion}.
+
+\subsection{Identificación molecular}
+
+El análisis del ADN mediante marcadores microsatélite —repeticiones simples
+de secuencia o SSR— permite identificar una variedad comparando su perfil
+genético contra bases de datos de referencia, con independencia del estado
+fenológico de la planta. La OIV incluye estos marcadores en su lista de
+descriptores dentro de la serie 800 \citep{oiv2023}, y fue esta técnica la
+que permitió establecer la correspondencia entre la variedad Misión y la
+española Listán Prieto \citep{tapia2007}. Su principal limitación práctica
+es operativa: exige enviar muestras a un laboratorio especializado, con el
+costo y el tiempo de espera asociados, lo que impide usarla como
+herramienta de consulta rutinaria en campo. El sistema propuesto en este
+trabajo no pretende sustituir esta técnica, sino ofrecer una verificación
+preliminar que permita reservarla para los casos que realmente la
+requieran.
+
+\subsection{Las variedades de interés del proyecto}
+\label{sec:variedades}
+
+Las tres variedades que integran el conjunto local de validación externa
+tienen orígenes y trayectorias distintas, lo que condiciona su
+disponibilidad en los conjuntos de datos públicos.
+
+\textbf{Syrah} es originaria del norte del valle del Ródano, en el sureste
+de Francia. Los análisis de marcadores microsatélite establecieron que
+procede del cruce entre Dureza, de Ardèche, y Mondeuse Blanca, de Saboya
+\citep{vouillamoz2006}, lo que descartó las hipótesis previas que le
+atribuían un origen persa o siciliano derivadas de la semejanza fonética de
+su nombre. Se conoce como Shiraz en Australia y Sudáfrica, sinónimo bajo el
+cual también aparece en algunos conjuntos de datos.
+
+\textbf{Tempranillo} es la variedad tinta de mayor superficie cultivada en
+España. Su origen genético se determinó mediante marcadores SNP y
+microsatélites, que identificaron a Albillo Mayor y Benedicto como sus
+progenitores \citep{ibanez2012}. Su sinonimia es particularmente extensa:
+en Portugal se denomina Tinta Roriz en la región del Duero y Aragonez en el
+Alentejo, y bajo esos nombres aparece en los conjuntos de datos de origen
+portugués. Una integración que no homologue estos tres nombres trataría a la
+misma variedad como tres clases distintas, con el consiguiente deterioro del
+clasificador.
+
+\textbf{Misión} es la variedad de mayor relevancia histórica en la
+península de Baja California, pues fue la introducida por las misiones
+españolas y constituye la base de la viticultura más antigua de América.
+El análisis de ADN estableció su correspondencia genética con la variedad
+española Listán Prieto, originaria de Castilla-La Mancha y difundida hacia
+América a través de las Islas Canarias \citep{tapia2007}. Recibe el nombre
+de País en Chile y Criolla Chica en Argentina. A diferencia de las dos
+anteriores, Misión no figura en ninguno de los conjuntos públicos de
+imágenes de hoja identificados en la revisión del capítulo anterior, lo que
+la convierte en el caso de prueba idóneo para evaluar el comportamiento del
+sistema ante una variedad desconocida.
+
+La Tabla~\ref{tab:variedades} resume esta información.
+
+\begin{longtable}{L{2.4cm}L{3.3cm}L{3.6cm}L{3.5cm}}
+\caption{Variedades que integran el conjunto local de validación externa.}
+\label{tab:variedades} \\
+\toprule
+\textbf{Variedad} & \textbf{Origen} & \textbf{Progenitores o correspondencia} & \textbf{Sinónimos principales} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Variedad} & \textbf{Origen} & \textbf{Progenitores o correspondencia} & \textbf{Sinónimos principales} \\
+\midrule
+\endhead
+Syrah & Norte del valle del Ródano, Francia & Dureza $\times$ Mondeuse Blanca \citep{vouillamoz2006} & Shiraz \\
+Tempranillo & España & Albillo Mayor $\times$ Benedicto \citep{ibanez2012} & Tinta Roriz, Aragonez \\
+Misión & Castilla-La Mancha, vía Islas Canarias & Corresponde genéticamente a Listán Prieto \citep{tapia2007} & Listán Prieto, País, Criolla Chica \\
+\bottomrule
+\end{longtable}
+
+Para la consulta sistemática de sinonimias y pedigríes existe el
+\textit{Vitis International Variety Catalogue} \citep{vivc}, base de datos
+de referencia que registra los nombres aceptados, los sinónimos
+documentados y las relaciones de parentesco de las variedades de vid, y que
+constituye la fuente recomendada para la homologación de etiquetas entre
+conjuntos de datos de distinta procedencia.
+
+% =====================================================================
+\section{Procesamiento digital de imágenes}
+% =====================================================================
+
+\subsection{Representación digital de una imagen}
+
+Una imagen digital en color puede modelarse como una función discreta
+$I(x,y,c)$ que asigna un valor de intensidad a cada posición espacial
+$(x,y)$ y a cada canal de color $c$ \citep{gonzalez2018}. En el modelo RGB,
+el más común en cámaras y sensores, la imagen se compone de tres canales
+—rojo, verde y azul— y se representa como un tensor de dimensiones
+$H \times W \times 3$, donde $H$ y $W$ son el alto y el ancho en píxeles.
+Con una profundidad de 8 bits por canal, cada elemento toma valores enteros
+en el intervalo $[0, 255]$.
+
+Además del RGB existen otros espacios de color útiles en tareas agrícolas.
+El espacio HSV descompone la información en matiz, saturación y valor, y
+separa así el contenido cromático de la intensidad luminosa, lo que lo hace
+más robusto frente a variaciones de iluminación; esta propiedad resulta
+conveniente cuando se requiere segmentar la hoja del fondo en condiciones de
+campo.
+
+\subsection{Preprocesamiento}
+
+Antes de alimentar una imagen a una red neuronal es necesario llevarla a un
+formato uniforme. El \textbf{redimensionamiento} ajusta todas las imágenes a
+la resolución de entrada que espera la arquitectura, comúnmente
+$224 \times 224$ píxeles. La \textbf{normalización} transforma el rango de
+intensidades para estabilizar el entrenamiento; la forma más habitual
+estandariza cada canal restando su media y dividiendo entre su desviación
+estándar:
+
+\begin{equation}
+\hat{I}_{c}(x,y) = \frac{I_{c}(x,y) - \mu_{c}}{\sigma_{c}},
+\label{eq:normalizacion}
+\end{equation}
+
+\noindent donde $\mu_{c}$ y $\sigma_{c}$ son la media y la desviación
+estándar del canal $c$, calculadas sobre el conjunto de entrenamiento o
+heredadas del conjunto con el que se preentrenó el modelo. Un aspecto
+crítico es que los mismos valores de $\mu_{c}$ y $\sigma_{c}$ deben
+aplicarse durante la inferencia; una discrepancia entre el preprocesamiento
+de entrenamiento y el de despliegue degrada el desempeño sin producir
+ningún error visible.
+
+\subsection{Interpolación, contraste y constancia de color}
+
+El redimensionamiento no es una operación neutra: al reducir la resolución
+es necesario interpolar, y el método elegido afecta al detalle que se
+conserva. La interpolación por vecino más cercano es la más rápida pero
+produce bordes escalonados; la bilineal promedia los cuatro píxeles
+vecinos; y la bicúbica, que considera dieciséis vecinos, preserva mejor los
+bordes finos \citep{gonzalez2018}. En una hoja de vid, el borde dentado y
+las nervaduras de menor calibre son precisamente las estructuras que una
+interpolación pobre elimina, por lo que conviene capturar a una resolución
+holgadamente superior a la de entrada del modelo y reducir en un solo paso.
+
+El \textbf{ajuste de contraste} redistribuye los valores de intensidad para
+aprovechar todo el rango disponible. La ecualización de histograma es la
+técnica clásica; su variante adaptativa con limitación de contraste opera
+por regiones y evita la amplificación excesiva del ruido en zonas
+homogéneas. Estas operaciones pueden mejorar la visibilidad de las
+nervaduras en imágenes subexpuestas, aunque alteran la información
+cromática y deben aplicarse de forma consistente entre entrenamiento e
+inferencia.
+
+La \textbf{constancia de color} busca que un mismo objeto produzca los
+mismos valores cromáticos bajo iluminaciones distintas. Los algoritmos de
+balance de blancos estiman el color de la fuente de luz y compensan sus
+efectos. Su importancia en este problema es directa: el color del limbo y
+la presencia de pigmentación antociánica en las nervaduras son caracteres
+descriptivos, y una dominante de color introducida por la iluminación o por
+el procesamiento automático de la cámara puede alterarlos lo suficiente
+para confundir al clasificador.
+
+Finalmente, conviene considerar los \textbf{artefactos de compresión}. El
+formato JPEG, habitual en cámaras y conjuntos públicos, descarta
+información de alta frecuencia y puede introducir distorsiones en los
+bordes finos. Cuando el conjunto de entrenamiento y las imágenes de
+producción provienen de cadenas de compresión distintas, esa diferencia
+constituye otra fuente de cambio de dominio.
+
+\subsection{Segmentación}
+
+La \textbf{segmentación} separa el objeto de interés del fondo. En
+imágenes de hojas adquiridas sobre fondo blanco controlado, basta con
+técnicas clásicas como la umbralización sobre un canal de color. En
+imágenes de campo, donde el fondo contiene suelo, hierba, troncos y otras
+hojas, se requieren métodos de aprendizaje profundo: el trabajo de
+\citet{adao2025} emplea Mask R-CNN para extraer la hoja antes de
+clasificarla. Una alternativa es prescindir de la segmentación explícita y
+entrenar el clasificador directamente sobre imágenes con fondo complejo,
+incorporando mecanismos de atención que aprendan a suprimir el fondo, como
+hace \citet{deng2025}.
+
+\subsection{Descriptores clásicos de forma}
+\label{sec:descriptores}
+
+Antes de la adopción generalizada del aprendizaje profundo, la
+clasificación automática de hojas se abordaba extrayendo descriptores
+numéricos diseñados manualmente y alimentando con ellos un clasificador
+convencional. Conocer estos descriptores es pertinente por dos motivos:
+constituyen el puente entre la ampelometría de la
+sección~\ref{sec:variedades} y el aprendizaje automático, y siguen siendo
+la base de varios de los estudios revisados en el capítulo anterior.
+
+Los \textbf{descriptores geométricos básicos} se calculan directamente
+sobre la silueta segmentada de la hoja: área, perímetro, longitud de los
+ejes principales, y razones adimensionales derivadas de ellos. Entre estas
+últimas destaca la \textbf{circularidad}
+
+\begin{equation}
+C = \frac{4\pi A}{P^{2}},
+\label{eq:circularidad}
+\end{equation}
+
+\noindent donde $A$ es el área y $P$ el perímetro. Su valor es 1 para un
+círculo perfecto y disminuye conforme el contorno se vuelve más irregular,
+por lo que resume en un solo número el grado de lobulación y de dentado del
+borde.
+
+Los \textbf{momentos invariantes} describen la distribución espacial de la
+masa de la figura. A partir de los momentos centrales normalizados se
+construyen combinaciones que permanecen constantes ante traslación, escala
+y rotación, propiedad esencial cuando las hojas se fotografían con
+orientaciones y distancias variables.
+
+Los \textbf{descriptores elípticos de Fourier} representan el contorno
+cerrado como una serie de armónicos, de modo que los primeros coeficientes
+capturan la forma global y los superiores el detalle fino del borde.
+Truncar la serie en un número reducido de armónicos produce una
+representación compacta y ordenada por escala, sobre la que puede aplicarse
+un análisis de componentes principales. \citet{chitwood2014} emplean esta
+técnica, combinada con superposición de Procrustes, para cuantificar la
+variación de forma y venación entre más de mil accesiones de vid.
+
+La \textbf{dimensión fractal} caracteriza la complejidad del contorno. El
+método de conteo de cajas recubre la imagen con una malla de celdas de lado
+$\varepsilon$, cuenta cuántas celdas $N(\varepsilon)$ contienen parte del
+contorno y estima
+
+\begin{equation}
+D = \lim_{\varepsilon \to 0} \frac{\log N(\varepsilon)}{\log (1/\varepsilon)},
+\label{eq:fractal}
+\end{equation}
+
+\noindent valor que en la práctica se obtiene como la pendiente de la
+regresión lineal de $\log N(\varepsilon)$ frente a $\log(1/\varepsilon)$.
+\citet{mancuso2001} aplicó esta medida a hojas de vid y reportó un error
+experimental menor que el de los descriptores ampelográficos
+tradicionales, y \citet{fuentes2018} la combinó con parámetros
+morfo-colorimétricos y espectroscópicos para alimentar una red neuronal
+artificial.
+
+La limitación común de todos estos descriptores es que exigen una
+segmentación precisa del contorno y que capturan únicamente aquello que el
+diseñador decidió medir. Las redes convolucionales invierten esa lógica:
+aprenden de los datos qué medir, a costa de requerir muchos más ejemplos y
+de perder la interpretabilidad directa de cada valor.
+
+\subsection{Aumento de datos}
+\label{sec:aumento}
+
+El \textbf{aumento de datos} genera ejemplos sintéticos aplicando
+transformaciones que preservan la etiqueta de la imagen: rotaciones,
+reflejos, recortes aleatorios, variaciones de brillo, contraste, saturación
+y tono, y adición de ruido \citep{shorten2019}. Su propósito es doble:
+ampliar artificialmente el tamaño del conjunto de entrenamiento y enseñar al
+modelo a ser invariante frente a esas transformaciones, lo que reduce el
+sobreajuste.
+
+El aumento de datos debe aplicarse \textbf{únicamente sobre la partición de
+entrenamiento y después de haber definido las particiones}. Si se aumenta el
+conjunto completo y se parte después, versiones transformadas de la misma
+imagen original pueden quedar repartidas entre entrenamiento y prueba; el
+modelo entonces evalúa imágenes que en esencia ya vio, y las métricas
+resultantes sobrestiman su desempeño real. Este fenómeno, conocido como
+\textbf{fuga de datos}, es una explicación plausible de las discrepancias
+observadas en el estado del arte entre estudios que emplean el mismo
+conjunto de imágenes.
+
+% =====================================================================
+\section{Redes neuronales artificiales}
+% =====================================================================
+
+\subsection{Aprendizaje supervisado y clasificación}
+
+El \textbf{aprendizaje supervisado} consiste en inferir una función
+$f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ a partir de un conjunto de
+pares etiquetados $\{(\mathbf{x}_{i}, y_{i})\}_{i=1}^{N}$, ajustando los
+parámetros $\theta$ para minimizar el error entre la salida del modelo y la
+etiqueta real \citep{goodfellow2016}. Cuando $\mathcal{Y}$ es un conjunto
+discreto y finito, el problema es de \textbf{clasificación}. La
+identificación varietal de vid se formula como una clasificación
+multiclase: la entrada $\mathbf{x}$ es la imagen de una hoja y la salida
+$y$ es una de las $K$ variedades consideradas.
+
+\subsection{La neurona artificial y el perceptrón multicapa}
+
+La unidad básica de una red neuronal calcula una combinación lineal de sus
+entradas seguida de una transformación no lineal:
+
+\begin{equation}
+a = f\!\left( \sum_{j=1}^{n} w_{j} x_{j} + b \right) = f(\mathbf{w}^{\top}\mathbf{x} + b),
+\label{eq:neurona}
+\end{equation}
+
+\noindent donde $\mathbf{x}$ es el vector de entradas, $\mathbf{w}$ el
+vector de pesos, $b$ el sesgo y $f$ la \textbf{función de activación}. Sin
+la no linealidad de $f$, la composición de varias capas seguiría siendo una
+transformación lineal y la red no podría representar fronteras de decisión
+complejas.
+
+El \textbf{perceptrón multicapa} organiza estas unidades en capas
+sucesivas, de modo que la salida de una capa es la entrada de la siguiente.
+Para la capa $l$, la propagación hacia adelante se expresa de forma
+matricial como
+
+\begin{equation}
+\mathbf{a}^{(l)} = f^{(l)}\!\left( \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)} \right),
+\label{eq:capa}
+\end{equation}
+
+\noindent con $\mathbf{a}^{(0)} = \mathbf{x}$.
+
+\subsection{Funciones de activación}
+
+La activación más utilizada en redes profundas modernas es la unidad lineal
+rectificada o \textbf{ReLU} \citep{nair2010}:
+
+\begin{equation}
+\mathrm{ReLU}(z) = \max(0, z).
+\label{eq:relu}
+\end{equation}
+
+Su ventaja principal es que su derivada es constante e igual a 1 para
+$z > 0$, lo que evita la atenuación del gradiente que sufren funciones
+saturantes como la sigmoide y permite entrenar redes de muchas capas. Entre
+sus variantes destacan Leaky ReLU, que asigna una pendiente pequeña para
+$z<0$, y las funciones suaves empleadas en arquitecturas móviles recientes,
+como \textit{h-swish} en MobileNetV3 \citep{howard2019}.
+
+En la capa de salida de un clasificador multiclase se emplea la función
+\textbf{softmax}, que convierte el vector de puntuaciones o \textit{logits}
+$\mathbf{z} \in \mathbb{R}^{K}$ en una distribución de probabilidad sobre
+las $K$ clases:
+
+\begin{equation}
+p_{k} = \mathrm{softmax}(\mathbf{z})_{k} = \frac{e^{z_{k}}}{\sum_{j=1}^{K} e^{z_{j}}},
+\qquad p_{k} \in (0,1), \quad \sum_{k=1}^{K} p_{k} = 1.
+\label{eq:softmax}
+\end{equation}
+
+El valor $\max_{k} p_{k}$ se interpreta como la confianza del modelo en su
+predicción y es la cantidad sobre la que se construye el mecanismo de
+rechazo descrito en la sección~\ref{sec:generalizacion}.
+
+\subsection{Función de pérdida y optimización}
+
+Para un problema de clasificación multiclase la función de pérdida estándar
+es la \textbf{entropía cruzada categórica}, que para un ejemplo con
+etiqueta verdadera codificada en \textit{one-hot} $\mathbf{y}$ se define
+como
+
+\begin{equation}
+\mathcal{L}(\mathbf{y}, \mathbf{p}) = -\sum_{k=1}^{K} y_{k} \log p_{k} = -\log p_{c},
+\label{eq:crossentropy}
+\end{equation}
+
+\noindent donde $c$ es el índice de la clase correcta. La pérdida crece sin
+límite conforme la probabilidad asignada a la clase correcta se acerca a
+cero, lo que penaliza fuertemente los errores cometidos con alta confianza.
+
+El ajuste de los parámetros se realiza mediante \textbf{descenso de
+gradiente estocástico}, actualizando iterativamente
+
+\begin{equation}
+\theta \leftarrow \theta - \eta \, \nabla_{\theta} \mathcal{L},
+\label{eq:sgd}
+\end{equation}
+
+\noindent donde $\eta$ es la \textbf{tasa de aprendizaje}. Los gradientes
+$\nabla_{\theta}\mathcal{L}$ se calculan mediante
+\textbf{retropropagación}, que aplica la regla de la cadena desde la salida
+hacia las capas anteriores \citep{rumelhart1986}. En la práctica se emplean
+optimizadores adaptativos como \textbf{Adam} \citep{kingma2015}, que ajustan
+la tasa de aprendizaje de cada parámetro a partir de estimaciones del primer
+y segundo momento del gradiente y convergen más rápido que el descenso de
+gradiente simple.
+
+Un pase completo sobre el conjunto de entrenamiento se denomina
+\textbf{época}, y los ejemplos se procesan en \textbf{lotes} de tamaño fijo,
+lo que reduce el consumo de memoria y aporta ruido estocástico que ayuda a
+escapar de mínimos locales pobres.
+
+\subsection{Aspectos prácticos del entrenamiento}
+
+Varios elementos ajenos a la arquitectura determinan si el entrenamiento
+converge y a qué solución lo hace.
+
+La \textbf{inicialización de los pesos} debe preservar la escala de las
+activaciones y de los gradientes a lo largo de la red. Las estrategias
+estándar ajustan la varianza inicial en función del número de conexiones de
+entrada y de salida de cada capa: la inicialización de Glorot
+\citep{glorot2010} para activaciones simétricas y la de He \citep{he2015}
+para redes basadas en ReLU. En transferencia de aprendizaje este problema
+desaparece parcialmente, porque la base convolucional parte de pesos ya
+entrenados y solo el clasificador nuevo requiere inicialización.
+
+La \textbf{tasa de aprendizaje} es el hiperparámetro más influyente. Un
+valor excesivo provoca oscilaciones o divergencia; uno demasiado pequeño
+hace el entrenamiento lento y propenso a estancarse. Es práctica habitual
+emplear una \textbf{programación} que la reduce conforme avanza el
+entrenamiento, ya sea por escalones, de forma exponencial o siguiendo un
+descenso cosenoidal con reinicios \citep{loshchilov2017}. En el ajuste fino
+se utiliza además una tasa diferenciada: muy baja para las capas
+preentrenadas que se descongelan y mayor para el clasificador nuevo.
+
+El \textbf{tamaño de lote} determina cuántos ejemplos contribuyen a cada
+estimación del gradiente. Lotes grandes producen estimaciones más estables y
+aprovechan mejor el hardware, pero requieren más memoria y el ruido
+estocástico que aportan los lotes pequeños suele mejorar la generalización.
+En presencia de normalización por lotes, un tamaño demasiado reducido
+degrada las estadísticas de normalización.
+
+El \textbf{desbalance de clases} es frecuente en conjuntos de hojas
+compilados a partir de fuentes heterogéneas, donde algunas variedades están
+representadas por muchas más imágenes que otras. Sin corrección, el modelo
+tiende a favorecer las clases mayoritarias. Las estrategias habituales son
+el remuestreo de las particiones, la ponderación de la pérdida por clase
+—asignando a cada clase un peso inversamente proporcional a su frecuencia—
+y funciones de pérdida que reducen la contribución de los ejemplos ya bien
+clasificados, como la pérdida focal \citep{lin2017}. La elección de métricas
+insensibles al desbalance, como el F1-score macro, es complementaria y no
+sustituye a estas correcciones.
+
+\subsection{Sobreajuste y regularización}
+
+Un modelo con capacidad suficiente puede memorizar el conjunto de
+entrenamiento y perder capacidad de generalización; este fenómeno es el
+\textbf{sobreajuste}, y se manifiesta cuando el error de entrenamiento sigue
+disminuyendo mientras el error de validación se estanca o aumenta. Las
+técnicas más utilizadas para mitigarlo son:
+
+\begin{itemize}
+    \item \textbf{Dropout} \citep{srivastava2014}: durante el entrenamiento
+    desactiva aleatoriamente una fracción $p$ de las unidades de una capa,
+    lo que impide que la red dependa de coadaptaciones específicas entre
+    neuronas y equivale de forma aproximada a promediar un conjunto de
+    subredes.
+    \item \textbf{Normalización por lotes} \citep{ioffe2015}: normaliza las
+    activaciones de cada capa usando la media y la varianza del lote, lo que
+    estabiliza y acelera el entrenamiento y aporta un efecto regularizador.
+    \item \textbf{Regularización $L_{2}$}: añade a la pérdida un término
+    proporcional a $\|\theta\|^{2}$ que penaliza los pesos de magnitud
+    elevada.
+    \item \textbf{Detención temprana}: interrumpe el entrenamiento cuando la
+    métrica de validación deja de mejorar durante un número determinado de
+    épocas.
+    \item \textbf{Aumento de datos}, descrito en la
+    sección~\ref{sec:aumento}.
+\end{itemize}
+
+% =====================================================================
+\section{Redes neuronales convolucionales}
+% =====================================================================
+
+\subsection{La operación de convolución}
+
+Aplicar un perceptrón multicapa directamente sobre una imagen es inviable:
+una entrada de $224 \times 224 \times 3$ tiene más de 150\,000 valores, y
+una sola capa densa de 1\,000 unidades requeriría más de 150 millones de
+parámetros. Además, esa representación ignora la estructura espacial de la
+imagen: los píxeles vecinos guardan una relación que el modelo tendría que
+aprender desde cero.
+
+Las \textbf{redes neuronales convolucionales} \citep{lecun1998} resuelven
+ambos problemas mediante la operación de convolución, en la que un
+\textbf{filtro} o \textbf{núcleo} de tamaño reducido se desplaza sobre la
+imagen calculando productos punto locales. Para una entrada $I$ y un filtro
+$W$ de dimensiones $k \times k \times C$, el elemento $(i,j)$ del mapa de
+características de salida es
+
+\begin{equation}
+O(i,j) = \sum_{c=1}^{C} \sum_{u=1}^{k} \sum_{v=1}^{k} I(i+u-1,\; j+v-1,\; c)\; W(u,v,c) \;+\; b.
+\label{eq:convolucion}
+\end{equation}
+
+Esta formulación introduce dos propiedades decisivas. La
+\textbf{conectividad local} hace que cada unidad de salida dependa solo de
+una región reducida de la entrada, su \textit{campo receptivo}. El
+\textbf{compartimiento de pesos} implica que el mismo filtro se aplica en
+todas las posiciones, de modo que un patrón aprendido en una zona de la
+imagen se detecta en cualquier otra, lo que otorga invariancia a la
+traslación y reduce drásticamente el número de parámetros.
+
+Las dimensiones del mapa de salida dependen del tamaño del filtro, del
+relleno o \textit{padding} $P$ y del paso o \textit{stride} $S$:
+
+\begin{equation}
+H_{\text{sal}} = \left\lfloor \frac{H_{\text{ent}} - k + 2P}{S} \right\rfloor + 1.
+\label{eq:dimensiones}
+\end{equation}
+
+Una capa convolucional con $C_{\text{ent}}$ canales de entrada y
+$C_{\text{sal}}$ filtros tiene
+
+\begin{equation}
+n_{\text{par}} = k^{2} \cdot C_{\text{ent}} \cdot C_{\text{sal}} + C_{\text{sal}}
+\label{eq:parametros}
+\end{equation}
+
+\noindent parámetros entrenables, cantidad independiente del tamaño de la
+imagen de entrada.
+
+\subsection{Submuestreo y arquitectura general}
+
+Entre bloques convolucionales se intercalan capas de \textbf{submuestreo} o
+\textit{pooling}, que reducen la resolución espacial conservando la
+información más relevante. El \textit{max pooling} toma el valor máximo de
+cada ventana y el \textit{average pooling} su promedio. Esta reducción
+disminuye el costo computacional, amplía el campo receptivo efectivo de las
+capas posteriores y aporta cierta invariancia a pequeñas traslaciones.
+
+La Figura~\ref{fig:cnn} resume la estructura general de una red
+convolucional aplicada al problema de este proyecto. Las primeras capas
+aprenden detectores de bordes y texturas; las intermedias combinan esos
+elementos en motivos más complejos —en el caso de una hoja, la curvatura de
+un seno o el patrón de los dientes del borde—; y las últimas capas producen
+representaciones asociadas a la identidad de la clase. Finalmente, una capa
+de agrupamiento global promedia cada mapa de características para obtener un
+vector, sobre el que actúa un clasificador denso y la función softmax.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=0.95, transform shape,
+    bloque/.style={rectangle, draw=blue!55!black, fill=blue!10, rounded corners=1pt,
+        minimum width=0.62cm, minimum height=#1, font=\tiny},
+    etq/.style={font=\scriptsize, align=center},
+    arr/.style={-{Latex[length=1.6mm]}, thin, draw=black!65}
+]
+\node[draw=green!45!black, fill=green!12, minimum width=1.6cm, minimum height=1.6cm,
+      font=\scriptsize, align=center] (img) at (0,0) {Imagen\\$224{\times}224{\times}3$};
+
+\node[bloque=1.5cm] (c1) at (1.9,0) {};
+\node[bloque=1.5cm] (c1b) at (2.25,0) {};
+\node[bloque=1.1cm] (c2) at (3.5,0) {};
+\node[bloque=1.1cm] (c2b) at (3.85,0) {};
+\node[bloque=0.75cm] (c3) at (5.1,0) {};
+\node[bloque=0.75cm] (c3b) at (5.45,0) {};
+\node[bloque=0.45cm] (c4) at (6.7,0) {};
+\node[bloque=0.45cm] (c4b) at (7.05,0) {};
+
+\node[draw=orange!70!black, fill=orange!12, minimum width=0.35cm, minimum height=1.3cm,
+      font=\tiny] (gap) at (8.2,0) {};
+\node[draw=purple!60!black, fill=purple!10, minimum width=0.35cm, minimum height=1.0cm,
+      font=\tiny] (fc) at (9.1,0) {};
+
+\draw[arr] (img) -- (c1);
+\draw[arr] (c1b) -- (c2);
+\draw[arr] (c2b) -- (c3);
+\draw[arr] (c3b) -- (c4);
+\draw[arr] (c4b) -- (gap);
+\draw[arr] (gap) -- (fc);
+\draw[arr] (fc) -- ++(1.0,0) node[right, font=\scriptsize, align=left]
+  {$p_1 \dots p_K$\\softmax};
+
+\node[etq, below=3mm of c1b] {Bloque 1\\conv + ReLU\\+ pooling};
+\node[etq, below=3mm of c2b] {Bloque 2};
+\node[etq, below=3mm of c3b] {Bloque 3};
+\node[etq, below=3mm of c4b] {Bloque $n$};
+\node[etq, below=3mm of gap, xshift=-1mm] {Agrup.\\global};
+\node[etq, below=3mm of fc, xshift=3mm] {Capa\\densa};
+
+\node[etq, above=7mm of c1b, text width=2.4cm] {bordes y texturas};
+\node[etq, above=7mm of c3b, text width=2.4cm] {motivos y partes};
+\node[etq, above=7mm of fc, xshift=-4mm, text width=2.4cm] {identidad de\\la variedad};
+\draw[dashed, draw=black!35] (1.5,1.0) -- (1.5,-0.95);
+\draw[dashed, draw=black!35] (7.7,1.0) -- (7.7,-0.95);
+
+\end{tikzpicture}
+\caption{Estructura general de una red neuronal convolucional para
+clasificación de imágenes de hoja. La profundidad de los bloques aumenta
+mientras la resolución espacial disminuye.}
+\label{fig:cnn}
+\end{figure}
+
+\subsection{Campo receptivo, convoluciones $1\times1$ y agrupamiento global}
+
+Tres elementos de diseño merecen atención por su papel en las
+arquitecturas ligeras.
+
+El \textbf{campo receptivo} de una unidad es la región de la imagen de
+entrada que influye en su valor. Se amplía al apilar capas: con filtros de
+$k \times k$ y paso unitario, el campo receptivo crece en $k-1$ píxeles por
+capa. Esta acumulación explica por qué apilar filtros pequeños es preferible
+a usar uno grande: dos capas de $3\times3$ alcanzan el mismo campo receptivo
+que una de $5\times5$ con menos parámetros y con una no linealidad adicional
+intercalada \citep{simonyan2015}. Para clasificar una hoja, el campo
+receptivo de las últimas capas debe abarcar una fracción sustancial del
+limbo, ya que los caracteres discriminantes —la proporción entre nervaduras
+o la apertura del seno peciolar— son relaciones globales y no detalles
+locales.
+
+Las \textbf{convoluciones $1\times1$} no capturan estructura espacial, pero
+combinan linealmente los canales en cada posición. Permiten reducir o
+aumentar la profundidad del tensor a un costo muy bajo, y por ello son la
+base de los cuellos de botella de ResNet, de los módulos Inception y de la
+etapa puntual de la convolución separable descrita en la
+sección~\ref{sec:ligeras}.
+
+El \textbf{agrupamiento promedio global} sustituye al aplanado seguido de
+capas densas que usaban las arquitecturas clásicas. Promedia cada mapa de
+características completo para producir un único valor por canal, de modo que
+el vector resultante tiene tantas componentes como canales y no depende de
+la resolución de entrada. Esto elimina la mayor parte de los parámetros del
+clasificador —en VGG-16 las capas densas concentran la mayoría de los 138
+millones de parámetros del modelo— y reduce el sobreajuste, razón por la
+cual todas las arquitecturas ligeras lo adoptan.
+
+Una medida del costo computacional complementaria al número de parámetros
+es el conteo de \textbf{operaciones de multiplicación y acumulación}. Para
+una capa convolucional que produce un mapa de $H_{\text{sal}} \times
+W_{\text{sal}}$ con $C_{\text{sal}}$ canales, este costo es
+
+\begin{equation}
+\mathrm{MAC} = H_{\text{sal}} \cdot W_{\text{sal}} \cdot C_{\text{sal}} \cdot k^{2} \cdot C_{\text{ent}}.
+\label{eq:macs}
+\end{equation}
+
+A diferencia del número de parámetros, esta cantidad sí depende de la
+resolución de entrada, y es la que predice de forma más directa la latencia
+de inferencia en una plataforma embebida.
+
+\subsection{Arquitecturas de referencia}
+
+El desarrollo de las redes convolucionales modernas está marcado por un
+conjunto de arquitecturas que introdujeron ideas todavía vigentes, y que son
+las que aparecen de forma recurrente en la literatura de identificación
+varietal revisada en el capítulo anterior.
+
+\textbf{AlexNet} \citep{krizhevsky2012} demostró en el concurso ImageNet
+\citep{deng2009} que una red convolucional profunda entrenada sobre GPU
+superaba ampliamente a los métodos basados en características diseñadas
+manualmente. \textbf{VGG} \citep{simonyan2015} mostró que apilar filtros
+pequeños de $3\times3$ en muchas capas es preferible a usar pocos filtros
+grandes. \textbf{GoogLeNet} \citep{szegedy2015} introdujo el módulo
+\textit{Inception}, que procesa la entrada en paralelo con filtros de
+distintos tamaños y concatena los resultados, capturando información a
+varias escalas. \textbf{ResNet} \citep{he2016} incorporó las conexiones
+residuales, que suman la entrada de un bloque a su salida,
+
+\begin{equation}
+\mathbf{y} = \mathcal{F}(\mathbf{x}, \{W_{i}\}) + \mathbf{x},
+\label{eq:residual}
+\end{equation}
+
+\noindent permitiendo entrenar redes de cientos de capas al ofrecer al
+gradiente un camino directo hacia las capas iniciales. \textbf{DenseNet}
+\citep{huang2017} llevó la idea más lejos conectando cada capa con todas las
+posteriores del bloque, lo que favorece la reutilización de
+características. \textbf{Xception} \citep{chollet2017} reemplazó los módulos
+Inception por convoluciones separables en profundidad, concepto central de
+la siguiente subsección.
+
+La Tabla~\ref{tab:arquitecturas} compara estas arquitecturas con las
+ligeras que se describen a continuación, empleando las cifras que sus
+propios autores reportan sobre ImageNet. El contraste es ilustrativo:
+MobileNetV3-Small utiliza aproximadamente una décima parte de los
+parámetros de ResNet-50 y sacrifica poco menos de nueve puntos de exactitud,
+un compromiso razonable cuando la restricción de memoria es determinante.
+
+\begin{longtable}{L{4.2cm}L{2.6cm}L{2.6cm}L{3.4cm}}
+\caption{Comparación de arquitecturas sobre ImageNet según las cifras
+reportadas por sus autores.}
+\label{tab:arquitecturas} \\
+\toprule
+\textbf{Arquitectura} & \textbf{Parámetros} & \textbf{Exactitud top-1} & \textbf{Costo} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Arquitectura} & \textbf{Parámetros} & \textbf{Exactitud top-1} & \textbf{Costo} \\
+\midrule
+\endhead
+ResNet-50 \citep{tan2019} & 26 M & 76.0\,\% & 4.1 GFLOPs \\
+DenseNet-169 \citep{tan2019} & 14 M & 76.2\,\% & 3.5 GFLOPs \\
+Xception \citep{tan2019} & 23 M & 79.0\,\% & 8.4 GFLOPs \\
+EfficientNet-B0 \citep{tan2019} & 5.3 M & 77.1\,\% & 0.39 GFLOPs \\
+MobileNetV2 1.0 \citep{howard2019} & 3.4 M & 72.0\,\% & 300 M MAdds \\
+MobileNetV3-Large 1.0 \citep{howard2019} & 5.4 M & 75.2\,\% & 219 M MAdds \\
+MobileNetV3-Small 1.0 \citep{howard2019} & 2.5 M & 67.4\,\% & 56 M MAdds \\
+\bottomrule
+\end{longtable}
+
+Conviene subrayar que estas cifras corresponden a una tarea de 1\,000
+clases con más de un millón de imágenes de entrenamiento. En un problema
+con pocas decenas de variedades y algunos miles de imágenes, la diferencia
+de exactitud entre arquitecturas suele reducirse, mientras que la
+diferencia de costo computacional se mantiene; es precisamente esta
+asimetría la que justifica priorizar modelos ligeros en el presente
+proyecto.
+
+\subsection{Arquitecturas ligeras}
+\label{sec:ligeras}
+
+Las arquitecturas anteriores fueron diseñadas priorizando la exactitud sobre
+el costo computacional. Para ejecutarse en dispositivos con recursos
+limitados se desarrollaron familias de modelos que buscan explícitamente el
+equilibrio entre ambos.
+
+La idea fundacional es la \textbf{convolución separable en profundidad},
+introducida en MobileNet \citep{howard2017}, que descompone una convolución
+estándar en dos operaciones sucesivas, ilustradas en la
+Figura~\ref{fig:separable}. La \textit{convolución en profundidad} aplica un
+único filtro espacial $k \times k$ a cada canal de entrada por separado, sin
+combinarlos. La \textit{convolución puntual} aplica después filtros
+$1 \times 1$ que sí combinan la información entre canales para producir los
+$C_{\text{sal}}$ mapas de salida.
+
+El ahorro es cuantificable. Una convolución estándar requiere
+$k^{2} \cdot C_{\text{ent}} \cdot C_{\text{sal}}$ parámetros
+(ecuación~\ref{eq:parametros}), mientras que la versión separable requiere
+$k^{2} \cdot C_{\text{ent}}$ para la etapa en profundidad más
+$C_{\text{ent}} \cdot C_{\text{sal}}$ para la puntual. La razón entre ambos
+costos es
+
+\begin{equation}
+R = \frac{k^{2} \cdot C_{\text{ent}} + C_{\text{ent}} \cdot C_{\text{sal}}}
+         {k^{2} \cdot C_{\text{ent}} \cdot C_{\text{sal}}}
+  = \frac{1}{C_{\text{sal}}} + \frac{1}{k^{2}}.
+\label{eq:separable}
+\end{equation}
+
+Para un filtro de $3\times3$ y un número de canales de salida grande, el
+segundo término domina y la reducción se aproxima a un factor de ocho o
+nueve, con una pérdida de exactitud pequeña. Este resultado explica por qué
+MobileNet y sus derivados aparecen de forma recurrente en los estudios de
+identificación varietal orientados a campo, como el de \citet{deng2025}.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=1.0, transform shape,
+    cubo/.style={rectangle, draw=blue!55!black, fill=blue!12, minimum width=0.42cm, minimum height=1.25cm},
+    filtro/.style={rectangle, draw=orange!70!black, fill=orange!15, minimum width=0.3cm, minimum height=0.3cm},
+    etq/.style={font=\scriptsize, align=center},
+    tit/.style={font=\scriptsize\bfseries},
+    arr/.style={-{Latex[length=1.6mm]}, thin, draw=black!65}
+]
+% ---------- Panel A: convolucion estandar ----------
+\node[tit] at (2.1,2.6) {(a) Convolución estándar};
+\node[cubo] (e1) at (0.35,1.1) {};
+\node[cubo] (e2) at (0.56,1.1) {};
+\node[cubo] (e3) at (0.77,1.1) {};
+\node[etq, above=1.5mm of e2] {entrada};
+\node[filtro] (f1) at (2.1,1.45) {};
+\node[filtro] (f2) at (2.1,1.10) {};
+\node[filtro] (f3) at (2.1,0.75) {};
+\node[etq, above=1.5mm of f1] {$C_{\text{sal}}$ filtros};
+\node[cubo] (s1) at (3.55,1.1) {};
+\node[cubo] (s2) at (3.76,1.1) {};
+\node[etq, above=1.5mm of s1, xshift=1.5mm] {salida};
+\draw[arr] (1.0,1.1) -- (1.85,1.1);
+\draw[arr] (2.35,1.1) -- (3.3,1.1);
+\node[etq, text width=4.4cm] at (2.1,-0.15)
+  {cada filtro $k\times k\times C_{\text{ent}}$ recorre\\todos los canales a la vez};
+\node[etq, text width=4.4cm] at (2.1,-0.95)
+  {$k^{2}\,C_{\text{ent}}\,C_{\text{sal}}$ parámetros};
+
+\draw[dashed, draw=black!30] (4.6,2.8) -- (4.6,-1.3);
+
+% ---------- Panel B: convolucion separable ----------
+\node[tit] at (9.6,2.6) {(b) Convolución separable en profundidad};
+\node[cubo] (a1) at (5.4,1.1) {};
+\node[cubo] (a2) at (5.61,1.1) {};
+\node[cubo] (a3) at (5.82,1.1) {};
+\node[etq, above=1.5mm of a2] {entrada};
+
+\node[filtro] (g1) at (7.1,1.45) {};
+\node[filtro] (g2) at (7.1,1.10) {};
+\node[filtro] (g3) at (7.1,0.75) {};
+\node[etq, above=4.5mm of g1, text width=2.3cm] {en profundidad};
+
+\node[cubo] (b1) at (8.7,1.1) {};
+\node[cubo] (b2) at (8.91,1.1) {};
+\node[cubo] (b3) at (9.12,1.1) {};
+
+\node[filtro, minimum width=0.18cm, minimum height=0.18cm] (h1) at (10.4,1.3) {};
+\node[filtro, minimum width=0.18cm, minimum height=0.18cm] (h2) at (10.4,0.9) {};
+\node[etq, above=1.5mm of h1, text width=2.0cm] {puntual $1{\times}1$};
+
+\node[cubo] (c1) at (11.8,1.1) {};
+\node[cubo] (c2) at (12.01,1.1) {};
+\node[etq, above=1.5mm of c1, xshift=1.5mm] {salida};
+
+\draw[arr] (6.05,1.1) -- (6.85,1.1);
+\draw[arr] (7.35,1.1) -- (8.45,1.1);
+\draw[arr] (9.35,1.1) -- (10.15,1.1);
+\draw[arr] (10.65,1.1) -- (11.55,1.1);
+
+\node[etq, text width=9.0cm] at (8.9,-0.15)
+  {un filtro $k\times k$ por canal, sin mezclarlos; después filtros
+   $1\times1$ que combinan los canales};
+\node[etq, text width=9.0cm] at (8.9,-0.95)
+  {$k^{2}\,C_{\text{ent}} + C_{\text{ent}}\,C_{\text{sal}}$ parámetros};
+\end{tikzpicture}
+\caption{Comparación entre la convolución estándar y la convolución
+separable en profundidad empleada por las arquitecturas ligeras.}
+\label{fig:separable}
+\end{figure}
+
+Sobre esta base, \textbf{MobileNetV2} \citep{sandler2018} añadió los
+\textit{bloques residuales invertidos} con cuello de botella lineal, que
+expanden el número de canales antes de la convolución en profundidad y lo
+contraen después, evitando la pérdida de información que provocaría una
+activación no lineal en un espacio de baja dimensión.
+\textbf{MobileNetV3} \citep{howard2019} incorporó búsqueda automática de
+arquitecturas, bloques de excitación y compresión, y la activación
+\textit{h-swish}. \textbf{EfficientNet} \citep{tan2019} propuso el
+\textit{escalado compuesto}, que aumenta de forma coordinada la profundidad,
+la anchura y la resolución de entrada de la red mediante un único
+coeficiente, en lugar de escalar una sola de esas dimensiones.
+
+Más recientemente, los \textbf{transformadores de visión}
+\citep{dosovitskiy2021} han mostrado resultados competitivos al dividir la
+imagen en parches y procesarlos con mecanismos de autoatención. Requieren
+conjuntos de datos considerablemente mayores o estrategias de
+preentrenamiento autosupervisado para igualar a las redes convolucionales,
+condición que en el dominio de las hojas de vid solo cumplen los trabajos de
+mayor escala \citep{carneiro2024mae}.
+
+\subsection{Mecanismos de atención}
+
+Un problema de las arquitecturas convolucionales puras es que tratan por
+igual todas las regiones y todos los canales del mapa de características.
+Los \textbf{mecanismos de atención} añaden la capacidad de ponderar esa
+información, y lo hacen con un costo de parámetros reducido, lo que los
+vuelve especialmente atractivos en modelos ligeros.
+
+Los bloques de \textbf{excitación y compresión} \citep{hu2018} operan sobre
+la dimensión de canales: comprimen cada mapa de características a un único
+valor mediante agrupamiento global, aprenden con una pequeña red densa un
+peso por canal, y reescalan los mapas con esos pesos. El modelo aprende así
+qué tipos de característica son relevantes para cada entrada. MobileNetV3
+los incorpora en varios de sus bloques \citep{howard2019}.
+
+La \textbf{atención de coordenadas} \citep{hou2021} extiende la idea
+incorporando información de posición: en lugar de comprimir cada mapa a un
+escalar, aplica agrupamiento a lo largo de cada eje por separado, lo que
+conserva la localización de los rasgos relevantes al tiempo que captura
+dependencias de largo alcance. Este mecanismo es el que emplea
+\citet{deng2025} sobre MobileNetV3-Small para clasificar hojas de vid
+fotografiadas en viñedos reales, donde permite suprimir la contribución del
+fondo —suelo, hierba, troncos— sin necesidad de una etapa previa de
+segmentación. Dada la similitud entre ese escenario y el del presente
+proyecto, se trata de un componente arquitectónico de interés directo.
+
+\subsection{Transferencia de aprendizaje}
+\label{sec:transferencia}
+
+Entrenar una red profunda desde cero exige cientos de miles de imágenes
+etiquetadas, una cantidad muy superior a la disponible en los conjuntos de
+hojas de vid. La \textbf{transferencia de aprendizaje} resuelve esta
+limitación aprovechando un modelo previamente entrenado sobre un conjunto
+grande y general, típicamente ImageNet \citep{deng2009}. Las primeras capas
+de ese modelo aprenden detectores de bordes, texturas y formas que resultan
+útiles en prácticamente cualquier tarea visual, de modo que solo las capas
+finales necesitan reaprenderse \citep{yosinski2014}.
+
+En la práctica se emplean dos modalidades. En la \textbf{extracción de
+características} se congela la base convolucional y se entrena únicamente un
+clasificador nuevo sobre las representaciones que produce; es el enfoque de
+\citet{koklu2022}, que alimenta con ellas una máquina de soporte vectorial.
+En el \textbf{ajuste fino} se descongelan además las capas superiores de la
+base y se reentrenan con una tasa de aprendizaje reducida, para adaptar las
+representaciones de alto nivel al dominio específico sin destruir lo
+aprendido. Lo habitual es combinar ambas en dos fases sucesivas, estrategia
+que adopta la metodología de este proyecto.
+
+% =====================================================================
+\section{Evaluación de modelos de clasificación}
+% =====================================================================
+
+\subsection{Particiones del conjunto de datos}
+
+Para estimar el desempeño de un modelo sobre datos no vistos, el conjunto
+disponible se divide en tres particiones disjuntas. La partición de
+\textbf{entrenamiento} se usa para ajustar los parámetros; la de
+\textbf{validación} se usa para tomar decisiones sobre el modelo —selección
+de arquitectura, hiperparámetros, criterio de detención temprana y, en este
+proyecto, calibración del umbral de rechazo—; y la de \textbf{prueba} se
+reserva para una única evaluación final. La partición debe ser
+\textbf{estratificada}, es decir, conservar la proporción de cada clase en
+las tres particiones, lo que resulta especialmente importante cuando el
+número de imágenes por variedad es desigual.
+
+Cuando el conjunto es pequeño, la \textbf{validación cruzada de $k$
+pliegues} aprovecha mejor los datos: el conjunto se divide en $k$
+subconjuntos, se entrena $k$ veces usando cada subconjunto como validación
+una sola vez, y se promedian los resultados. Su costo es entrenar el modelo
+$k$ veces.
+
+Cualquier contaminación entre particiones —la \textbf{fuga de datos}—
+invalida la estimación. Además del caso del aumento de datos descrito en la
+sección~\ref{sec:aumento}, una fuente frecuente en este dominio es la
+duplicación entre fuentes: los conjuntos públicos de hojas de vid se
+compilan con frecuencia a partir de otros conjuntos, de modo que la misma
+imagen puede aparecer en dos recursos distintos y, al unirlos, quedar
+repartida entre entrenamiento y prueba. También constituye fuga que varias
+fotografías de la misma hoja física, tomadas desde ángulos distintos,
+queden separadas entre particiones.
+
+\subsection{Matriz de confusión y métricas}
+
+Los resultados de un clasificador se resumen en la \textbf{matriz de
+confusión}, una tabla de $K \times K$ en la que la celda $(i,j)$ indica
+cuántas muestras de la clase real $i$ fueron predichas como clase $j$. La
+diagonal contiene los aciertos y los elementos fuera de ella revelan qué
+pares de clases se confunden, información particularmente valiosa en este
+problema, donde ciertas variedades comparten morfología foliar.
+
+Para una clase $k$, y denotando por $\mathrm{VP}_k$ los verdaderos
+positivos, $\mathrm{FP}_k$ los falsos positivos y $\mathrm{FN}_k$ los falsos
+negativos, se definen la precisión y la exhaustividad:
+
+\begin{equation}
+\mathrm{Precision}_{k} = \frac{\mathrm{VP}_{k}}{\mathrm{VP}_{k} + \mathrm{FP}_{k}},
+\qquad
+\mathrm{Recall}_{k} = \frac{\mathrm{VP}_{k}}{\mathrm{VP}_{k} + \mathrm{FN}_{k}}.
+\label{eq:precision}
+\end{equation}
+
+El \textbf{F1-score} de la clase $k$ es su media armónica, que penaliza el
+desequilibrio entre ambas:
+
+\begin{equation}
+F1_{k} = 2 \cdot \frac{\mathrm{Precision}_{k} \cdot \mathrm{Recall}_{k}}
+                      {\mathrm{Precision}_{k} + \mathrm{Recall}_{k}}.
+\label{eq:f1}
+\end{equation}
+
+La \textbf{exactitud} global es la proporción de predicciones correctas
+sobre el total de muestras $N$:
+
+\begin{equation}
+\mathrm{Exactitud} = \frac{1}{N}\sum_{k=1}^{K} \mathrm{VP}_{k}.
+\label{eq:exactitud}
+\end{equation}
+
+Esta métrica es engañosa cuando las clases están desbalanceadas, ya que un
+modelo puede alcanzar un valor alto acertando solo en las clases más
+numerosas. Por ello se reporta además el \textbf{F1-score macro}, que
+promedia el F1 de cada clase asignándoles el mismo peso con independencia de
+su frecuencia:
+
+\begin{equation}
+F1_{\text{macro}} = \frac{1}{K}\sum_{k=1}^{K} F1_{k}.
+\label{eq:f1macro}
+\end{equation}
+
+Cuando el sistema entrega una lista ordenada de predicciones, la
+\textbf{exactitud top-$n$} considera acierto que la clase correcta figure
+entre las $n$ primeras. Es una métrica pertinente en identificación
+varietal, porque un sistema que reduce las posibilidades a tres candidatas
+sigue siendo útil para el técnico que hará la verificación final; el trabajo
+de \citet{denart2024} la emplea precisamente para mostrar que la caída de
+desempeño en datos externos se atenúa al pasar de top-1 a top-3.
+
+\subsection{Incertidumbre de las métricas}
+
+Una métrica calculada sobre un conjunto de prueba pequeño es una
+estimación con incertidumbre considerable, y reportarla como un número
+único puede inducir a error. Para una proporción $\hat{p}$ observada sobre
+$n$ muestras, el \textbf{intervalo de confianza de Wilson}
+\citep{wilson1927} ofrece una cobertura adecuada incluso con $n$ pequeño o
+$\hat{p}$ cercano a los extremos, situaciones en las que el intervalo normal
+clásico falla:
+
+\begin{equation}
+\mathrm{IC} = \frac{\hat{p} + \dfrac{z^{2}}{2n} \;\pm\; z\sqrt{\dfrac{\hat{p}(1-\hat{p})}{n} + \dfrac{z^{2}}{4n^{2}}}}
+                   {1 + \dfrac{z^{2}}{n}},
+\label{eq:wilson}
+\end{equation}
+
+\noindent donde $z$ es el cuantil de la distribución normal estándar
+correspondiente al nivel de confianza deseado ($z \approx 1.96$ para el
+95\,\%). Dado que el conjunto local de validación externa de este proyecto
+es de tamaño reducido, todas las métricas externas se reportan acompañadas
+de este intervalo.
+
+\subsection{Comparación entre modelos}
+
+Seleccionar la mejor arquitectura comparando una sola cifra de exactitud es
+poco fiable, porque esa cifra depende de la inicialización aleatoria, del
+orden de los lotes y del comportamiento estocástico de técnicas como
+dropout. Dos procedimientos mitigan este problema.
+
+El primero consiste en repetir el entrenamiento con varias
+\textbf{semillas aleatorias} distintas y reportar la media y la desviación
+estándar de la métrica. Si los intervalos de dos arquitecturas se solapan
+ampliamente, la diferencia observada no sostiene una conclusión.
+
+El segundo aplica una \textbf{prueba estadística} sobre las predicciones.
+La prueba de McNemar \citep{mcnemar1947} es apropiada cuando dos modelos se
+evalúan sobre el mismo conjunto de prueba, situación en la que sus errores
+están correlacionados y las pruebas para muestras independientes no son
+válidas. La prueba se construye sobre los casos en que los modelos
+discrepan: sea $n_{01}$ el número de muestras que el primer modelo clasifica
+mal y el segundo bien, y $n_{10}$ el caso contrario; el estadístico, con
+corrección de continuidad, es
+
+\begin{equation}
+\chi^{2} = \frac{\left(|n_{01} - n_{10}| - 1\right)^{2}}{n_{01} + n_{10}},
+\label{eq:mcnemar}
+\end{equation}
+
+\noindent y se compara contra una distribución $\chi^{2}$ con un grado de
+libertad. \citet{dietterich1998} analiza las propiedades de esta y otras
+pruebas en el contexto de la comparación de algoritmos de clasificación y
+advierte sobre el error de tipo I que introducen los procedimientos basados
+en particiones repetidas.
+
+Cuando la selección se realiza además atendiendo al costo computacional,
+como ocurre en este proyecto, la comparación deja de ser unidimensional: se
+trata de elegir sobre una frontera de compromiso entre exactitud y costo,
+en la que resulta preferible el modelo más económico entre los que
+satisfacen el umbral de desempeño establecido.
+
+\subsection{Generalización, cambio de dominio y conjunto abierto}
+\label{sec:generalizacion}
+
+El supuesto sobre el que descansa la evaluación anterior es que los datos de
+prueba provienen de la misma distribución que los de entrenamiento. Cuando
+ese supuesto se rompe se produce un \textbf{cambio de dominio} o
+\textit{domain shift} \citep{quinonero2009}, y el desempeño medido en la
+partición interna deja de predecir el desempeño real.
+
+En el problema de identificación varietal, el cambio de dominio tiene
+causas concretas y acumulativas: el dispositivo de captura, con su
+resolución, óptica y procesamiento de color propios; las condiciones de
+iluminación, entre luz natural y controlada; el fondo, entre superficie
+neutra y vegetación; el estado fenológico y sanitario de la hoja; y las
+condiciones agroclimáticas del viñedo, que modifican la expresión
+morfológica de la misma variedad. Esta última causa es la traducción, en
+términos computacionales, de la limitación ampelográfica señalada al inicio
+del capítulo. La evidencia empírica de este fenómeno en el dominio de las
+hojas de vid está documentada por \citet{denart2024}, cuyos modelos
+perdieron exactitud de forma drástica al evaluarse contra un conjunto
+adquirido por terceros, y por \citet{carneiro2024mae}, que obtuvo un
+F1-score muy inferior al separar las temporadas de adquisición entre
+entrenamiento y evaluación.
+
+Un segundo supuesto implícito es el de \textbf{conjunto cerrado}: que toda
+muestra presentada al modelo pertenece a alguna de las $K$ clases
+entrenadas. En condiciones reales este supuesto también se rompe, porque el
+usuario puede fotografiar una variedad que el modelo nunca vio. Como la
+función softmax de la ecuación~\ref{eq:softmax} fuerza que las
+probabilidades sumen uno, la red asignará necesariamente la muestra a alguna
+clase conocida, con frecuencia con confianza alta. El \textbf{reconocimiento
+en conjunto abierto} aborda este problema incorporando la opción de
+rechazar la predicción. La estrategia de referencia, por su simplicidad y
+eficacia, utiliza la probabilidad máxima de la salida como puntuación de
+confianza \citep{hendrycks2017}: dado un umbral $\tau$, el sistema decide
+
+\begin{equation}
+\hat{y} =
+\begin{cases}
+\arg\max_{k} p_{k}, & \text{si } \max_{k} p_{k} \geq \tau, \\[4pt]
+\text{``no reconocida''}, & \text{en otro caso.}
+\end{cases}
+\label{eq:rechazo}
+\end{equation}
+
+El umbral $\tau$ regula el compromiso entre cobertura y seguridad: un valor
+alto reduce los errores silenciosos pero rechaza también muestras válidas.
+Debe calibrarse sobre la partición de validación del dominio de
+entrenamiento y fijarse antes de evaluar el conjunto externo, pues ajustarlo
+observando los datos de prueba invalidaría la medición.
+
+Una advertencia necesaria es que las redes profundas modernas tienden a
+estar \textbf{mal calibradas}: sus probabilidades son sistemáticamente más
+altas que la frecuencia real de acierto, de modo que un valor de softmax de
+0.99 no equivale a un 99\,\% de probabilidad de acierto \citep{guo2017}. Por
+ello el umbral debe determinarse empíricamente y no fijarse en un valor
+arbitrario.
+
+El grado de descalibración se cuantifica con el \textbf{error de
+calibración esperado}, que agrupa las predicciones en $M$ intervalos de
+confianza $B_{m}$ y compara, dentro de cada uno, la exactitud observada con
+la confianza promedio:
+
+\begin{equation}
+\mathrm{ECE} = \sum_{m=1}^{M} \frac{|B_{m}|}{N}
+               \bigl|\, \mathrm{exactitud}(B_{m}) - \mathrm{confianza}(B_{m}) \,\bigr|.
+\label{eq:ece}
+\end{equation}
+
+Un modelo perfectamente calibrado tendría ECE igual a cero, es decir, entre
+las predicciones emitidas con confianza cercana a 0.8 acertaría
+aproximadamente el 80\,\%. Entre las técnicas de recalibración, el
+\textit{escalado de temperatura} es la más simple y efectiva: divide los
+\textit{logits} por un escalar $T > 0$ ajustado sobre la partición de
+validación antes de aplicar la función softmax de la
+ecuación~\ref{eq:softmax}, lo que suaviza la distribución sin alterar el
+orden de las clases y, por tanto, sin modificar la predicción
+\citep{guo2017}. Esta propiedad es conveniente para el mecanismo de
+rechazo, pues permite mejorar la interpretabilidad del umbral $\tau$ sin
+afectar la exactitud del clasificador.
+
+% =====================================================================
+\section{Sistemas embebidos e inferencia en el borde}
+% =====================================================================
+
+\subsection{Conceptos y plataformas}
+
+Un \textbf{sistema embebido} es un sistema de cómputo diseñado para cumplir
+una función específica dentro de un dispositivo, con restricciones de
+memoria, capacidad de procesamiento, consumo energético y, con frecuencia,
+tiempo de respuesta. Cuando además ejecuta modelos de aprendizaje
+automático de forma local, sin enviar los datos a un servidor, se habla de
+\textbf{inferencia en el borde} o \textit{edge computing}. Este esquema
+ofrece cuatro ventajas relevantes para una aplicación de campo: opera sin
+conexión a internet, algo determinante en viñedos con cobertura limitada;
+elimina la latencia de la comunicación; mantiene los datos en el
+dispositivo; y reduce el costo recurrente de infraestructura.
+
+Las plataformas disponibles se agrupan en tres categorías, resumidas en la
+Tabla~\ref{tab:plataformas}. Los \textbf{microcontroladores} ofrecen el
+menor consumo y costo, pero su memoria se mide en cientos de kilobytes, lo
+que obliga a modelos muy reducidos. Las \textbf{computadoras de placa
+única} ejecutan un sistema operativo completo y disponen de varios
+gigabytes de memoria, a cambio de un consumo mayor. Los \textbf{módulos con
+acelerador} incorporan una GPU o una unidad de procesamiento neuronal que
+reduce sustancialmente la latencia de inferencia, con el mayor costo y
+consumo de los tres.
+
+\begin{longtable}{L{2.9cm}L{3.3cm}L{3.3cm}L{3.5cm}}
+\caption{Categorías de plataformas para inferencia en el borde. Los valores
+son órdenes de magnitud orientativos; las cifras exactas del hardware
+candidato se medirán durante la etapa de selección.}
+\label{tab:plataformas} \\
+\toprule
+\textbf{Categoría} & \textbf{Ejemplo} & \textbf{Memoria y cómputo} & \textbf{Consumo aproximado} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Categoría} & \textbf{Ejemplo} & \textbf{Memoria y cómputo} & \textbf{Consumo aproximado} \\
+\midrule
+\endhead
+Microcontrolador & ESP32-S3 con cámara & Cientos de kB de RAM; CPU sin unidad de punto flotante dedicada a tensores & Por debajo de 1 W \\
+Computadora de placa única & Raspberry Pi 5 & Varios GB de RAM; CPU multinúcleo de propósito general & Unidades de watts \\
+Módulo con acelerador & NVIDIA Jetson Orin Nano & Varios GB compartidos; GPU integrada & Modos configurables de 7 W y 15 W \\
+\bottomrule
+\end{longtable}
+
+\subsection{Entornos de ejecución}
+
+Un modelo entrenado en un entorno de escritorio no se ejecuta directamente
+en una plataforma embebida: debe convertirse a un formato de inferencia
+optimizado. \textbf{TensorFlow Lite} —actualmente denominado LiteRT— es el
+entorno más extendido para dispositivos móviles y de placa única, y cuenta
+con la variante \textbf{TensorFlow Lite Micro} \citep{david2021}, diseñada
+para microcontroladores sin sistema operativo ni asignación dinámica de
+memoria. \textbf{ONNX Runtime} ofrece un formato intermedio independiente
+del marco de entrenamiento, lo que facilita mover un modelo entre
+herramientas. \textbf{TensorRT} es el entorno de NVIDIA, que compila el
+modelo específicamente para la GPU de destino y aplica fusión de capas y
+selección de núcleos optimizados.
+
+La conversión de un modelo hacia el formato de destino sigue un flujo con
+puntos de fallo conocidos. El modelo entrenado se exporta a un formato
+intermedio, se convierte al formato del entorno de ejecución aplicando las
+optimizaciones elegidas, y finalmente se integra en la aplicación. El
+obstáculo más frecuente es la \textbf{cobertura de operadores}: los
+entornos embebidos implementan un subconjunto del catálogo de operaciones
+disponible en el marco de entrenamiento, de modo que una capa poco común o
+una operación personalizada puede impedir la conversión o forzar su
+ejecución en un modo de compatibilidad mucho más lento. Por esta razón es
+recomendable verificar la convertibilidad de la arquitectura candidata
+antes de invertir tiempo en entrenarla, y no al final del proceso.
+
+Algunas plataformas incorporan además \textbf{aceleradores de inferencia}
+—unidades de procesamiento neuronal o tensorial— que ejecutan operaciones
+de convolución en hardware dedicado. Estos aceleradores suelen imponer
+condiciones adicionales: con frecuencia requieren que el modelo esté
+cuantizado por completo a enteros y que todos sus operadores estén
+soportados, pues cualquier operación no admitida provoca que el cómputo
+regrese al procesador principal, lo que anula buena parte de la ganancia
+esperada.
+
+\subsection{Técnicas de optimización de modelos}
+
+\textbf{Cuantización.} Es la técnica de mayor impacto. Consiste en
+representar pesos y activaciones con enteros de baja precisión —típicamente
+8 bits— en lugar de números de punto flotante de 32 bits. La correspondencia
+entre el valor real $r$ y su representación entera $q$ es afín
+\citep{jacob2018}:
+
+\begin{equation}
+r = S\,(q - Z),
+\label{eq:cuantizacion}
+\end{equation}
+
+\noindent donde $S$ es un factor de escala en punto flotante y $Z$ es el
+entero que representa al cero. Para un intervalo de valores
+$[r_{\min}, r_{\max}]$ y una representación de $b$ bits, la escala es
+
+\begin{equation}
+S = \frac{r_{\max} - r_{\min}}{2^{b} - 1}.
+\label{eq:escala}
+\end{equation}
+
+La cuantización a 8 bits reduce el tamaño del modelo en un factor cercano a
+cuatro y permite emplear aritmética entera, considerablemente más rápida y
+eficiente en energía que la de punto flotante en la mayoría de los
+procesadores embebidos. Existen dos modalidades: la \textbf{cuantización
+posterior al entrenamiento}, que convierte un modelo ya entrenado usando un
+pequeño conjunto de calibración para estimar los rangos de activación, y el
+\textbf{entrenamiento consciente de la cuantización}, que simula el efecto
+del redondeo durante el entrenamiento y recupera buena parte de la exactitud
+perdida, al costo de reentrenar el modelo.
+
+\textbf{Poda.} Elimina pesos o canales cuya contribución a la salida es
+despreciable. La poda estructurada, que retira canales o filtros completos,
+es la que realmente reduce el tiempo de inferencia en hardware
+convencional, mientras que la poda no estructurada produce matrices
+dispersas que requieren soporte específico para traducirse en una mejora
+real de velocidad.
+
+\textbf{Destilación del conocimiento.} Entrena un modelo pequeño —el
+estudiante— para reproducir las distribuciones de salida de un modelo grande
+y preciso —el maestro— en lugar de las etiquetas duras \citep{hinton2015}.
+Las probabilidades del maestro contienen información sobre la similitud
+entre clases que las etiquetas no transmiten, y esa señal adicional permite
+al estudiante superar el desempeño que alcanzaría entrenado por su cuenta.
+
+\subsection{Métricas de desempeño embebido}
+
+La evaluación de un sistema embebido no se agota en la exactitud. Las
+métricas complementarias son las siguientes.
+
+La \textbf{latencia de inferencia} es el tiempo transcurrido entre la
+entrada de la imagen y la disponibilidad de la predicción. Debe reportarse
+descartando las primeras ejecuciones, en las que el entorno reserva memoria
+y carga el modelo, y acompañada de una medida de dispersión, ya que la
+distribución suele presentar valores atípicos; por ello se reporta la media
+junto con un percentil alto, habitualmente el percentil 95. El
+\textbf{rendimiento} o \textit{throughput}, su inverso, expresa cuántas
+imágenes por segundo procesa el sistema.
+
+El \textbf{uso de memoria} comprende tanto el espacio que ocupa el modelo en
+almacenamiento como la memoria de trabajo requerida durante la inferencia,
+que incluye los tensores intermedios. En microcontroladores esta última es
+con frecuencia la restricción determinante.
+
+El \textbf{consumo energético} se obtiene a partir de la potencia medida en
+la alimentación del dispositivo durante la inferencia. La energía por
+inferencia se calcula como
+
+\begin{equation}
+E = \bar{P} \cdot t_{\text{inf}},
+\label{eq:energia}
+\end{equation}
+
+\noindent donde $\bar{P}$ es la potencia media y $t_{\text{inf}}$ la
+latencia. Esta magnitud determina la autonomía en un despliegue alimentado
+por batería.
+
+\subsection{Condiciones de medición}
+
+Las métricas anteriores solo son comparables si se miden bajo condiciones
+controladas y documentadas. Tres factores merecen atención particular.
+
+El \textbf{estrangulamiento térmico} reduce la frecuencia del procesador
+cuando la temperatura supera un umbral, con la consiguiente pérdida de
+rendimiento. Una medición de latencia realizada sobre unas pocas
+inferencias, con el dispositivo frío, puede resultar considerablemente
+optimista frente al comportamiento en operación sostenida bajo el sol de un
+viñedo. Por ello la caracterización debe incluir una prueba de carga
+prolongada además de la medición puntual.
+
+El \textbf{modo de energía} de la plataforma condiciona directamente los
+resultados: los módulos con acelerador ofrecen perfiles configurables que
+limitan la potencia disponible, y la latencia medida carece de sentido si no
+se reporta junto con el perfil activo.
+
+Finalmente, la \textbf{frontera de medición} debe definirse con precisión.
+La latencia de la inferencia aislada no coincide con la latencia extremo a
+extremo percibida por el usuario, que incluye la captura de la imagen, el
+preprocesamiento, la copia de datos hacia el acelerador y la presentación
+del resultado. Reportar solo la primera sobrestima el desempeño del sistema
+completo, por lo que conviene medir y desglosar ambas.
+
+\subsection{Captura de imagen}
+
+El subsistema de adquisición condiciona todo lo demás. Los módulos de cámara
+para plataformas embebidas emplean sensores CMOS y se conectan mediante
+interfaces como MIPI CSI-2, en las placas que la ofrecen, o mediante USB. Los
+parámetros que más influyen en la calidad de la imagen para esta aplicación
+son la resolución, que debe superar con margen la entrada del modelo para no
+perder detalle en el borde dentado de la hoja; el enfoque, dado que la
+captura se realiza a corta distancia; y el control de exposición y balance
+de blancos, cuyo comportamiento automático puede introducir variaciones de
+color entre capturas que el modelo no vio durante el entrenamiento. Una
+práctica recomendable es documentar y, en lo posible, fijar estos parámetros,
+de modo que las condiciones de captura en producción se aproximen a las del
+conjunto de entrenamiento y se reduzca el cambio de dominio descrito en la
+sección~\ref{sec:generalizacion}.
+
+% =====================================================================
+\section{Síntesis del marco teórico}
+% =====================================================================
+
+Los elementos presentados en este capítulo se articulan de la siguiente
+manera en el sistema propuesto. La ampelografía establece que la hoja adulta
+concentra caracteres suficientes para distinguir variedades, y que esos
+caracteres son geométricos: proporciones entre nervaduras, ángulos, forma de
+los senos y del borde. Las redes convolucionales son adecuadas precisamente
+porque aprenden ese tipo de patrones espaciales directamente de los píxeles,
+sin necesidad de medirlos manualmente. La transferencia de aprendizaje hace
+viable entrenarlas con los pocos miles de imágenes disponibles en los
+conjuntos públicos, y las arquitecturas ligeras basadas en convolución
+separable en profundidad reducen el costo computacional lo suficiente para
+que el modelo quepa en una plataforma embebida.
+
+Ahora bien, la misma ampelografía advierte que la expresión morfológica
+depende del ambiente, y la teoría del cambio de dominio explica por qué eso
+degrada el desempeño de un modelo entrenado con imágenes de otro origen;
+de ahí la necesidad de una evaluación externa con hojas locales y de
+reportar sus métricas con intervalos de confianza. Y dado que el sistema
+operará en un entorno donde pueden aparecer variedades ausentes del
+entrenamiento, el reconocimiento en conjunto abierto justifica incorporar un
+umbral de rechazo. Finalmente, la cuantización y las métricas de desempeño
+embebido proporcionan las herramientas para llevar el modelo a la plataforma
+de destino y caracterizar su comportamiento en ella. Estos son los
+fundamentos sobre los que se construyen los métodos del capítulo siguiente.

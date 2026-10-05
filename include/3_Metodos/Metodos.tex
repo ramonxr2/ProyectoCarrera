@@ -1,3 +1,946 @@
-% CREATED BY DAVID FRISK, 2018
-\chapter{Métodos}
-El marco metodológico es la explicación de los mecanismos utilizados para el análisis de nuestra problemática de investigación. Por lo general, se trata del tercer capítulo del proyecto y es el resultado de la aplicación, sistemática y lógica, de los conceptos y fundamentos expuestos en el marco teórico. Es importante comprender que la metodología de la investigación es progresiva, por lo tanto, no es posible realizar el marco metodológico sin las fundamentaciones teóricas que van a justificar el estudio del tema elegido.
+% Marcador de contenido pendiente de completar tras las pruebas en hardware
+\providecommand{\pendiente}[1]{%
+  \par\noindent\fcolorbox{orange!70!black}{orange!8}{%
+    \parbox{0.97\linewidth}{\footnotesize\textbf{[PENDIENTE]} #1}}\par\medskip}
+
+\chapter{Diseño y desarrollo de la solución}
+
+En este capítulo se describe el proceso de diseño y desarrollo del sistema
+embebido para la identificación de variedades de vid a partir de imágenes de
+hojas. Se presentan los requerimientos de la solución, las alternativas
+tecnológicas consideradas y los criterios con los que se eligió una de ellas,
+el diseño detallado del sistema, el plan de construcción del prototipo y las
+características de la solución desarrollada.
+
+El proyecto se lleva a cabo mediante una metodología de prototipado
+iterativo: se diseña una primera versión del sistema, se realizan pruebas
+parciales por subsistema, se identifican problemas y se efectúan mejoras
+sucesivas sobre los módulos de adquisición, inferencia y presentación de
+resultados. Este capítulo explica qué se diseñó y cómo se construyó; la
+evaluación del desempeño, el contraste de las hipótesis y las tablas de
+resultados corresponden al capítulo siguiente.
+
+\pendiente{Las secciones 3.4 y 3.5 contienen el plan de construcción y la
+ficha de la solución. Los valores medidos, las fotografías del prototipo y
+los cambios efectuados entre iteraciones se incorporarán una vez que la
+plataforma de cómputo esté disponible y se realicen las pruebas.}
+
+% =====================================================================
+\section{Especificación de requerimientos}
+% =====================================================================
+
+Esta sección establece qué debe hacer el sistema y bajo qué condiciones debe
+funcionar. Los requerimientos se derivan directamente de los objetivos
+específicos y de las hipótesis formuladas en el capítulo~1, de modo que cada
+uno pueda verificarse posteriormente mediante una medición concreta.
+
+\subsection{Requerimientos funcionales}
+
+El sistema debe capturar la imagen de una hoja de vid mediante una cámara
+integrada, sin depender de un equipo externo; preprocesar esa imagen con los
+mismos parámetros empleados durante el entrenamiento del modelo; ejecutar
+localmente la inferencia con un modelo de red neuronal convolucional
+cuantizado; aplicar un umbral de confianza que permita rechazar las muestras
+que no corresponden a ninguna variedad conocida; presentar al usuario la
+variedad identificada junto con su nivel de confianza, o bien la leyenda
+``variedad no reconocida''; y registrar cada inferencia con su marca de
+tiempo, la predicción y el tiempo de ejecución, de manera que las mediciones
+del capítulo de resultados puedan reconstruirse.
+
+\subsection{Requerimientos de desempeño y no funcionales}
+
+Los requerimientos de desempeño traducen los umbrales de las hipótesis
+H1a--H1d a valores verificables sobre el prototipo. Los no funcionales
+describen las condiciones de operación: autonomía respecto de una conexión a
+internet, costo acotado y facilidad de mantenimiento. La
+Tabla~\ref{tab:requerimientos} reúne la especificación completa.
+
+\begin{longtable}{L{1.5cm}L{4.9cm}L{2.0cm}L{4.9cm}}
+\caption{Especificación de requerimientos del sistema.}
+\label{tab:requerimientos} \\
+\toprule
+\textbf{Código} & \textbf{Requerimiento} & \textbf{Tipo} & \textbf{Criterio de aceptación} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Código} & \textbf{Requerimiento} & \textbf{Tipo} & \textbf{Criterio de aceptación} \\
+\midrule
+\endhead
+RF-01 & Capturar la imagen de una hoja mediante cámara integrada & Funcional & Obtiene una imagen enfocada y correctamente expuesta a la distancia de trabajo definida \\
+RF-02 & Preprocesar la imagen con los parámetros del entrenamiento & Funcional & Redimensiona a $224\times224$ y normaliza con los mismos valores usados al entrenar \\
+RF-03 & Ejecutar la inferencia de forma local & Funcional & Produce una predicción sin conexión a internet ni equipo externo \\
+RF-04 & Rechazar variedades no reconocidas & Funcional & Reporta ``no reconocida'' cuando la confianza es menor que el umbral $\tau$ \\
+RF-05 & Presentar el resultado al usuario & Funcional & Muestra la variedad y el valor de confianza asociado \\
+RF-06 & Registrar cada inferencia & Funcional & Almacena marca de tiempo, predicción, confianza y tiempo de ejecución \\
+RD-01 & Exactitud en el dominio de entrenamiento & Desempeño & Exactitud top-1 $\geq$ 90\,\% y F1 macro $\geq$ 0.88 (H1a) \\
+RD-02 & Generalización al conjunto local & Desempeño & Exactitud top-1 $\geq$ 70\,\% en Syrah y Tempranillo locales (H1b) \\
+RD-03 & Capacidad de rechazo & Desempeño & Tasa de rechazo $\geq$ 70\,\% en imágenes de Misión (H1c) \\
+RD-04 & Latencia de inferencia & Desempeño & $\leq$ 500~ms por imagen en la plataforma seleccionada (H1d) \\
+RD-05 & Pérdida por cuantización & Desempeño & $\leq$ 2 puntos porcentuales de exactitud (H1d) \\
+RNF-01 & Operación autónoma & No funcional & Funciona sin conexión a internet tras el arranque \\
+RNF-02 & Costo acotado & No funcional & Costo total de los componentes dentro del presupuesto disponible \\
+RNF-03 & Estabilidad térmica & No funcional & Mantiene el desempeño durante una prueba de carga prolongada \\
+RNF-04 & Modificabilidad del modelo & No funcional & Permite sustituir el modelo sin modificar el resto del software \\
+RNF-05 & Reproducibilidad & No funcional & Documenta versiones de software, parámetros y procedimiento de instalación \\
+\bottomrule
+\end{longtable}
+
+\subsection{Restricciones}
+
+El diseño está condicionado por cuatro restricciones. La \textbf{restricción
+presupuestal} limita el costo del conjunto de componentes a los recursos
+aportados por los dos integrantes del equipo, lo que excluye las plataformas
+de cómputo con acelerador dedicado. La \textbf{restricción de datos} deriva
+de la disponibilidad de conjuntos públicos: el sistema solo podrá reconocer
+las variedades presentes en ellos, y la variedad Misión, ausente de todos los
+conjuntos identificados, únicamente podrá rechazarse. La \textbf{restricción
+de conectividad} responde al escenario de uso en viñedo, donde no puede
+suponerse cobertura de datos. Finalmente, la \textbf{restricción temporal}
+corresponde al periodo del curso, que condiciona el número de iteraciones de
+prototipado posibles.
+
+\subsection{Trazabilidad}
+
+La Tabla~\ref{tab:trazabilidad} relaciona cada requerimiento con el objetivo
+específico del que proviene y, cuando corresponde, con la hipótesis que
+permite contrastar. Esta relación se retoma en la sección~3.5 para verificar
+que la solución construida cubre lo solicitado.
+
+\begin{longtable}{L{3.1cm}L{3.5cm}L{2.9cm}L{3.5cm}}
+\caption{Trazabilidad entre requerimientos, objetivos e hipótesis.}
+\label{tab:trazabilidad} \\
+\toprule
+\textbf{Requerimientos} & \textbf{Objetivo específico} & \textbf{Hipótesis} & \textbf{Sección de diseño} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Requerimientos} & \textbf{Objetivo específico} & \textbf{Hipótesis} & \textbf{Sección de diseño} \\
+\midrule
+\endhead
+RF-01, RF-02 & OE5 & -- & 3.3.2 Adquisición \\
+RD-01, RD-05 & OE2, OE3 & H1a, H1d & 3.3.4 Modelo; 3.3.5 Cálculos \\
+RD-02, RD-03 & OE6 & H1b, H1c & 3.3.3 Datos; 3.3.6 Software \\
+RD-04, RNF-03 & OE4, OE7 & H1d & 3.2 Selección; 3.3.5 Cálculos \\
+RF-03 a RF-06 & OE5 & -- & 3.3.6 Software; 3.3.7 Interfaz \\
+RNF-01, RNF-02 & OE4 & -- & 3.2 Selección \\
+RNF-04, RNF-05 & OE5 & -- & 3.3.6 Software \\
+\bottomrule
+\end{longtable}
+
+% =====================================================================
+\section{Generación, evaluación y selección de alternativas}
+% =====================================================================
+
+Esta sección documenta cómo se produjeron distintas propuestas de solución y
+por qué se eligió una de ellas. El procedimiento seguido consistió en aplicar
+técnicas de generación de ideas, integrar esas ideas en alternativas
+completas mediante una matriz morfológica, definir criterios técnicos y
+económicos de evaluación, comparar las alternativas con una matriz de
+decisión y justificar la selección final.
+
+\subsection{Técnicas para la generación de ideas}
+
+\subsubsection{Lluvia de ideas}
+
+La pregunta generadora fue: \textit{¿qué componentes de captura, cómputo,
+modelo y software permitirían identificar la variedad de una hoja de vid
+directamente en campo, sin conexión a internet y con un presupuesto
+reducido?} Las propuestas registradas, sin evaluarlas en ese momento, fueron
+las siguientes.
+
+En captura de imagen: cámara con conector MIPI CSI, cámara USB, cámara de un
+teléfono móvil, módulo con sensor OV2640, cámara con enfoque automático,
+cámara de obturador global, iluminación propia mediante anillo de LED y
+plantilla de fondo neutro. En cómputo: microcontrolador con TensorFlow Lite
+Micro, computadora de placa única, módulo con GPU integrada, acelerador USB
+externo y procesamiento en teléfono móvil. En modelo: MobileNetV2,
+MobileNetV3-Small, EfficientNet-B0, ResNet-50 como referencia, transformador
+de visión ligero, descriptores clásicos de forma con un clasificador
+convencional y segmentación previa de la hoja. En software: TensorFlow Lite,
+ONNX Runtime, cuantización int8, umbral de rechazo por confianza, registro en
+archivo delimitado, interfaz de línea de comandos e interfaz web local. En
+alimentación: batería portátil USB-C, fuente de pared y panel solar.
+
+\subsubsection{Mapa mental}
+
+Las ideas anteriores se organizaron en un mapa mental alrededor del concepto
+central ``sistema embebido de identificación varietal'', con ramas para los
+subsistemas de adquisición, cómputo, modelo, software, energía y validación
+(Figura~\ref{fig:mapamental}). El mapa permitió verificar que las propuestas
+contemplaran el sistema completo y no únicamente el modelo de clasificación,
+que es el aspecto sobre el que se concentra la mayor parte de la literatura
+revisada en el capítulo~1.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    centro/.style={rectangle, rounded corners, draw=blue!65!black, fill=blue!15,
+        text width=3.0cm, align=center, minimum height=1.2cm, font=\small\bfseries},
+    rama/.style={rectangle, rounded corners, draw=teal!60!black, fill=teal!8,
+        text width=2.9cm, align=center, minimum height=0.8cm, font=\scriptsize\bfseries},
+    hoja/.style={text width=3.1cm, align=center, font=\scriptsize},
+    lin/.style={thick, draw=teal!55!black}
+]
+\node[centro] (c) at (0,0) {Sistema embebido de identificación varietal};
+
+\node[rama] (adq)  at (-4.6, 2.3) {Adquisición};
+\node[rama] (comp) at ( 0,   2.9) {Cómputo};
+\node[rama] (mod)  at ( 4.6, 2.3) {Modelo};
+\node[rama] (soft) at (-4.6,-2.3) {Software};
+\node[rama] (ene)  at ( 0,  -2.9) {Energía};
+\node[rama] (val)  at ( 4.6,-2.3) {Validación};
+
+\draw[lin] (c) -- (adq);  \draw[lin] (c) -- (comp); \draw[lin] (c) -- (mod);
+\draw[lin] (c) -- (soft); \draw[lin] (c) -- (ene);  \draw[lin] (c) -- (val);
+
+\node[hoja, above=1mm of adq]  {cámara CSI o USB\\distancia y fondo\\enfoque e iluminación};
+\node[hoja, above=1mm of comp] {microcontrolador\\placa única\\módulo con GPU};
+\node[hoja, above=1mm of mod]  {MobileNet, EfficientNet\\transformadores\\descriptores clásicos};
+\node[hoja, below=1mm of soft] {TFLite u ONNX\\umbral de rechazo\\registro e interfaz};
+\node[hoja, below=1mm of ene]  {batería USB-C\\fuente de pared\\consumo por inferencia};
+\node[hoja, below=1mm of val]  {conjunto local UABC\\latencia y memoria\\prueba térmica};
+\end{tikzpicture}
+\caption{Mapa mental de los subsistemas considerados durante la generación de
+ideas.}
+\label{fig:mapamental}
+\end{figure}
+
+\subsubsection{SCAMPER}
+
+La técnica SCAMPER se aplicó sobre la propuesta inicial —una computadora de
+placa única con cámara y un modelo convolucional— para explorar
+modificaciones. La Tabla~\ref{tab:scamper} resume el resultado.
+
+\begin{longtable}{L{2.0cm}L{4.6cm}L{7.0cm}}
+\caption{Aplicación de SCAMPER a la propuesta inicial.}
+\label{tab:scamper} \\
+\toprule
+\textbf{Acción} & \textbf{Pregunta aplicada} & \textbf{Idea obtenida} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Acción} & \textbf{Pregunta aplicada} & \textbf{Idea obtenida} \\
+\midrule
+\endhead
+Sustituir & ¿Qué componente puede reemplazarse? & Sustituir la red convolucional completa por una arquitectura ligera con atención de coordenadas \\
+Combinar & ¿Qué elementos pueden trabajar juntos? & Combinar la salida del clasificador con un umbral de confianza para habilitar el rechazo \\
+Adaptar & ¿Qué solución externa puede aprovecharse? & Adaptar la metodología de medición de latencia y consumo usada en los trabajos de detección de enfermedades \\
+Modificar & ¿Qué característica puede cambiarse? & Reducir la resolución de entrada o el ancho del modelo si la latencia resulta excesiva \\
+Otros usos & ¿Puede un elemento cumplir otra función? & Usar la misma cámara para documentar el conjunto local de validación externa \\
+Eliminar & ¿Qué elemento no es indispensable? & Eliminar la etapa de segmentación previa si el modelo tolera fondos heterogéneos \\
+Reordenar & ¿Qué ocurre al cambiar el orden? & Aplicar el umbral de rechazo antes de registrar el resultado, para no almacenar predicciones no válidas como si fueran identificaciones \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{Combinación de objetos y relaciones forzadas}
+
+Finalmente se combinaron elementos que suelen analizarse por separado, lo
+que produjo cuatro ideas incorporadas al diseño: cámara con enfoque
+automático y captura a corta distancia, para resolver el desenfoque en el
+borde dentado de la hoja; modelo cuantizado y registro de latencia por
+inferencia, de modo que la caracterización del hardware no requiera
+instrumentación adicional; umbral de confianza y conjunto local de Misión,
+que convierte una limitación de los datos públicos en un caso de prueba; y
+plataforma con sistema operativo completo más interfaz web local, que permite
+consultar el resultado desde un teléfono sin instalar nada en él.
+
+\subsection{Matriz morfológica}
+
+La matriz morfológica de la Tabla~\ref{tab:morfologica} combina opciones de
+cada subsistema para construir alternativas completas y técnicamente
+coherentes.
+
+\begin{longtable}{L{2.9cm}L{3.4cm}L{3.4cm}L{3.4cm}}
+\caption{Matriz morfológica de los subsistemas del sistema propuesto.}
+\label{tab:morfologica} \\
+\toprule
+\textbf{Función} & \textbf{Opción 1} & \textbf{Opción 2} & \textbf{Opción 3} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Función} & \textbf{Opción 1} & \textbf{Opción 2} & \textbf{Opción 3} \\
+\midrule
+\endhead
+Captura de imagen & Módulo OV2640 integrado & Cámara CSI con enfoque automático & Cámara USB externa \\
+Plataforma de cómputo & Microcontrolador con PSRAM & Computadora de placa única & Módulo con GPU integrada \\
+Arquitectura del modelo & Red muy reducida a baja resolución & Arquitectura ligera a $224\times224$ & Arquitectura profunda de referencia \\
+Entorno de inferencia & TensorFlow Lite Micro & TensorFlow Lite u ONNX Runtime & TensorRT \\
+Optimización & Cuantización int8 obligatoria & Cuantización int8 opcional & Precisión completa \\
+Presentación del resultado & LED o pantalla pequeña & Línea de comandos e interfaz web local & Monitor externo \\
+Alimentación & Batería USB-C & Batería USB-C o fuente de pared & Fuente de pared dedicada \\
+\bottomrule
+\end{longtable}
+
+\subsection{Alternativas de solución obtenidas}
+
+De las combinaciones anteriores se construyeron cuatro alternativas
+completas, descritas en la Tabla~\ref{tab:alternativas}.
+
+\begin{longtable}{L{1.7cm}L{5.2cm}L{3.1cm}L{3.1cm}}
+\caption{Alternativas de solución consideradas.}
+\label{tab:alternativas} \\
+\toprule
+\textbf{Alt.} & \textbf{Configuración} & \textbf{Ventaja principal} & \textbf{Limitación principal} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Alt.} & \textbf{Configuración} & \textbf{Ventaja principal} & \textbf{Limitación principal} \\
+\midrule
+\endhead
+A: mínima & Microcontrolador ESP32-S3 con cámara integrada, modelo muy reducido a baja resolución y TensorFlow Lite Micro \citep{xiaoesp32s3, david2021} & Costo y consumo mínimos; el más cercano a un producto de campo & Memoria muy limitada; obliga a reducir la resolución de entrada y a renunciar a las arquitecturas evaluadas en la literatura \\
+B: equilibrada & Computadora de placa única Raspberry Pi 5 de 2~GB, cámara CSI con enfoque automático, modelo ligero cuantizado int8 y TensorFlow Lite \citep{rpi5specs, rpicam3} & Ejecuta las arquitecturas de la literatura sin modificarlas; soporte de software maduro & Consumo mayor que un microcontrolador; requiere disipación activa \\
+B': económica & Raspberry Pi 4 de 4~GB con la misma cámara y el mismo flujo de software & Mismo ecosistema de software que B & Capacidad de cómputo sensiblemente menor y costo superior al de B en el mercado local \\
+C: avanzada & Módulo NVIDIA Jetson Orin Nano con GPU integrada y TensorRT & Mayor capacidad de cómputo; margen para arquitecturas profundas & Costo muy por encima del presupuesto; mayor consumo y complejidad de puesta en marcha \\
+\bottomrule
+\end{longtable}
+
+\subsection{Criterios de evaluación}
+
+Los criterios y sus ponderaciones se establecieron a partir de los
+requerimientos de la sección~3.1. La
+Tabla~\ref{tab:criterios} los presenta junto con su justificación.
+
+\begin{longtable}{L{3.6cm}L{2.7cm}L{7.0cm}}
+\caption{Criterios de evaluación y ponderaciones.}
+\label{tab:criterios} \\
+\toprule
+\textbf{Criterio} & \textbf{Ponderación} & \textbf{Justificación} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Criterio} & \textbf{Ponderación} & \textbf{Justificación} \\
+\midrule
+\endhead
+Capacidad de cómputo y margen de latencia & 25\,\% & Determina el cumplimiento de RD-04 y el margen disponible para el resto del flujo \\
+Costo total de la solución & 20\,\% & Restricción presupuestal explícita del proyecto (RNF-02) \\
+Compatibilidad con el flujo de software & 20\,\% & Condiciona si las arquitecturas de la literatura pueden ejecutarse sin modificarlas (RD-01, RNF-04) \\
+Memoria disponible frente a la requerida & 15\,\% & Filtro de viabilidad: si el modelo no cabe, la alternativa queda descartada \\
+Consumo energético & 10\,\% & Afecta la autonomía en campo y forma parte de la caracterización (OE7) \\
+Disponibilidad local y soporte & 10\,\% & Reduce el riesgo de retrasos por falta de componentes dentro del periodo del curso \\
+\bottomrule
+\end{longtable}
+
+Cada alternativa se califica de 1 a 5, donde 1 representa un desempeño muy
+deficiente y 5 uno excelente. La calificación ponderada se obtiene
+multiplicando cada calificación por su ponderación y sumando los resultados.
+
+\subsection{Matriz de decisión y selección}
+
+Las calificaciones se asignaron con base en evidencia documentada y no en
+preferencia personal. La capacidad de cómputo se calificó a partir de
+mediciones publicadas de inferencia: sobre MobileNetV2 con cuatro hilos, el
+Raspberry Pi 4 requiere 61.88~ms por imagen y el Raspberry Pi 5,
+13.63~ms, es decir, aproximadamente 4.5 veces más rápido
+\citep{seeed2023bench}. El costo se calificó con los precios del distribuidor
+autorizado en México consultados en octubre de 2026 \citep{ohms2026}. La
+memoria se contrastó contra el tamaño estimado del modelo cuantizado,
+calculado en la sección~3.3.5. La Tabla~\ref{tab:decision} presenta la matriz
+resultante.
+
+\begin{longtable}{L{4.2cm}L{1.5cm}L{1.6cm}L{1.6cm}L{1.6cm}L{1.6cm}}
+\caption{Matriz de decisión para la selección de la plataforma.}
+\label{tab:decision} \\
+\toprule
+\textbf{Criterio} & \textbf{Pond.} & \textbf{A} & \textbf{B} & \textbf{B'} & \textbf{C} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Criterio} & \textbf{Pond.} & \textbf{A} & \textbf{B} & \textbf{B'} & \textbf{C} \\
+\midrule
+\endhead
+Capacidad de cómputo & 25\,\% & 2 & 4 & 3 & 5 \\
+Costo total & 20\,\% & 5 & 4 & 3 & 1 \\
+Compatibilidad de software & 20\,\% & 2 & 5 & 5 & 4 \\
+Memoria disponible & 15\,\% & 1 & 4 & 4 & 5 \\
+Consumo energético & 10\,\% & 5 & 3 & 3 & 2 \\
+Disponibilidad y soporte & 10\,\% & 3 & 5 & 4 & 2 \\
+\midrule
+\textbf{Total ponderado} & & \textbf{2.85} & \textbf{4.20} & \textbf{3.65} & \textbf{3.40} \\
+\bottomrule
+\end{longtable}
+
+La alternativa B obtuvo la calificación más alta. La justificación de la
+selección puede resumirse en tres puntos.
+
+En primer lugar, el criterio de latencia resultó menos discriminante de lo
+esperado: el umbral establecido en H1d es de 500~ms por imagen, y tanto el
+Raspberry Pi 4 como el Pi 5 lo cumplen con holgura sobre una arquitectura
+ligera. La diferencia relevante no es el cumplimiento del umbral sino el
+margen disponible para el resto del flujo —captura, preprocesamiento y
+presentación—, que se cuantifica en la sección~3.3.5.
+
+En segundo lugar, el costo favoreció a la alternativa B por una razón de
+mercado y no de especificación: en el distribuidor autorizado consultado, el
+Raspberry Pi 5 de 2~GB tiene un precio inferior al del Raspberry Pi 4 de
+4~GB \citep{ohms2026}, de modo que la alternativa B' resulta a la vez más
+lenta y más cara. La alternativa C quedó descartada por presupuesto antes de
+cualquier consideración técnica.
+
+En tercer lugar, la alternativa A fue descartada por el filtro de viabilidad
+de memoria. Un microcontrolador con memoria del orden de unidades de
+megabytes obligaría a reducir la resolución de entrada muy por debajo de
+$224\times224$ y a emplear una arquitectura sensiblemente menor que las
+evaluadas en la literatura revisada, lo que impediría comparar los resultados
+con los trabajos del estado del arte y comprometería el cumplimiento de
+RD-01. Se conserva, sin embargo, como plataforma de contraste: si el
+calendario y el presupuesto lo permiten, se implementará una versión reducida
+sobre ella para documentar el límite inferior de viabilidad, lo que
+enriquecería la caracterización solicitada por OE7.
+
+Respecto de la capacidad de memoria dentro de la alternativa seleccionada, se
+eligió la variante de 2~GB en lugar de las de mayor capacidad. El
+entrenamiento se realiza fuera del dispositivo y la inferencia de un modelo
+ligero cuantizado requiere una fracción muy pequeña de esa memoria, como se
+verifica en la sección~3.3.5, por lo que el incremento de capacidad no se
+traduciría en ninguna mejora medible sobre las variables de interés del
+proyecto.
+
+% =====================================================================
+\section{Modelado, cálculos y diseño detallado}
+% =====================================================================
+
+Esta sección explica técnicamente cómo está diseñada la alternativa
+seleccionada antes de construirla, con el nivel de detalle necesario para que
+el diseño pueda reproducirse.
+
+\subsection{Arquitectura general del sistema}
+
+El sistema se organiza en dos flujos. El \textbf{flujo fuera de línea} se
+ejecuta en una computadora de escritorio y produce el modelo cuantizado junto
+con el umbral de rechazo; se realiza una sola vez. El \textbf{flujo en el
+dispositivo} se ejecuta en la plataforma embebida cada vez que el usuario
+solicita una identificación. La Figura~\ref{fig:arquitectura} presenta ambos.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=0.88, transform shape,
+    etapa/.style={rectangle, rounded corners, draw=blue!60!black, fill=blue!8,
+        text width=2.4cm, align=center, minimum height=1.0cm, font=\scriptsize},
+    disp/.style={rectangle, rounded corners, draw=teal!60!black, fill=teal!8,
+        text width=2.1cm, align=center, minimum height=1.0cm, font=\scriptsize},
+    dec/.style={diamond, aspect=2.2, draw=orange!70!black, fill=orange!12,
+        inner sep=1pt, text width=1.5cm, align=center, font=\scriptsize},
+    sal/.style={rectangle, rounded corners, draw=purple!60!black, fill=purple!8,
+        text width=2.1cm, align=center, minimum height=0.9cm, font=\scriptsize},
+    arr/.style={-{Latex[length=1.8mm]}, thin, draw=black!65},
+    tit/.style={font=\scriptsize\bfseries}
+]
+% ---------- Flujo fuera de linea ----------
+\node[tit, anchor=west] at (-0.7,3.8) {Fuera de línea (computadora de escritorio)};
+\node[etapa] (d1) at (0.7,2.6)  {Conjuntos públicos de hojas};
+\node[etapa] (d2) at (3.8,2.6)  {Curaduría y particiones fijas};
+\node[etapa] (d3) at (6.9,2.6)  {Entrenamiento y ajuste fino};
+\node[etapa] (d4) at (10.0,2.6) {Cuantización int8 y umbral $\tau$};
+\draw[arr] (d1) -- (d2); \draw[arr] (d2) -- (d3); \draw[arr] (d3) -- (d4);
+
+\draw[dashed, draw=black!35] (-0.7,1.55) -- (12.9,1.55);
+
+% ---------- Flujo en el dispositivo ----------
+\node[tit, anchor=west] at (-0.7,1.2) {En el dispositivo (Raspberry Pi 5)};
+\node[disp] (p1) at (0.6,-0.3)  {Cámara CSI};
+\node[disp] (p2) at (3.2,-0.3)  {Preproceso $224{\times}224$};
+\node[disp] (p3) at (5.9,-0.3)  {Intérprete TFLite int8};
+\node[dec]  (p4) at (8.6,-0.3)  {$\max p_k \geq \tau$};
+\node[sal]  (s1) at (11.2, 0.6) {Variedad y confianza};
+\node[sal]  (s2) at (11.2,-1.3) {Variedad no reconocida};
+\node[disp] (log) at (11.2,-2.9) {Registro: tiempo, predicción, latencia};
+
+\draw[arr] (p1) -- (p2); \draw[arr] (p2) -- (p3); \draw[arr] (p3) -- (p4);
+\draw[arr] (p4.north east) -- node[above left, font=\tiny, pos=0.6] {sí} (s1.west);
+\draw[arr] (p4.south east) -- node[below left, font=\tiny, pos=0.6] {no} (s2.west);
+\draw[arr] (s1) -- (s2);
+\draw[arr] (s2) -- (log);
+
+% ---------- Entrega del modelo al dispositivo ----------
+\draw[arr, dashed, draw=blue!55!black]
+      (d4.south) -- (10.0,1.15) -- (5.9,1.15) -- (p3.north);
+\node[font=\tiny, text=blue!55!black, fill=white, inner sep=1.5pt] at (7.95,1.15) {modelo .tflite};
+\end{tikzpicture}
+\caption{Arquitectura general del sistema: flujo de preparación del modelo
+fuera de línea y flujo de inferencia en el dispositivo.}
+\label{fig:arquitectura}
+\end{figure}
+
+\subsection{Diseño del subsistema de adquisición}
+
+El subsistema de adquisición está formado por el módulo de cámara con sensor
+de 12~MP y enfoque automático, conectado a la plataforma mediante la
+interfaz MIPI CSI \citep{rpicam3}. La elección del enfoque automático
+responde a una condición del problema: la captura se realiza a una distancia
+de entre 20 y 30~cm, dentro del rango en el que una cámara de foco fijo
+entrega imágenes con pérdida de detalle en el borde dentado de la hoja, que
+es uno de los caracteres discriminantes descritos en el capítulo~2.
+
+El protocolo de captura fija las condiciones que el modelo verá en
+producción: hoja adulta completa y extendida, plano paralelo al sensor,
+fondo neutro cuando sea posible, iluminación natural difusa evitando sombras
+duras, y resolución de captura superior a la de entrada del modelo para
+realizar una sola reducción. Los parámetros de exposición y balance de
+blancos se fijan en valores constantes en lugar de dejarlos en modo
+automático: una corrección automática distinta entre capturas introduce
+variaciones de color que el modelo no observó durante el entrenamiento y que
+constituyen, en los términos del capítulo~2, una fuente evitable de cambio de
+dominio.
+
+\subsection{Diseño del conjunto de datos y las particiones}
+
+El conjunto de entrenamiento se integra a partir de los recursos públicos
+identificados en el capítulo~1, con tres operaciones de curaduría. La
+\textbf{homologación de sinónimos} unifica bajo un solo nombre las etiquetas
+que designan la misma variedad. La \textbf{deduplicación} compara las
+imágenes mediante \textit{hash} perceptual para detectar coincidencias entre
+fuentes, operación indispensable porque los conjuntos compilados integran
+imágenes de otros conjuntos y un duplicado repartido entre entrenamiento y
+prueba inflaría artificialmente las métricas. La \textbf{partición
+estratificada} genera los subconjuntos de entrenamiento, validación y prueba,
+que quedan fijos para todo el proyecto y se almacenan como listas de archivos
+versionadas junto con el código.
+
+El conjunto local de la UABC no participa en ninguna de estas operaciones:
+se mantiene aislado y se utiliza únicamente en la evaluación externa, con la
+asignación de papeles descrita en el capítulo~1, donde Syrah y Tempranillo
+funcionan como clases conocidas y Misión como variedad desconocida.
+
+\subsection{Diseño del modelo y del entrenamiento}
+
+Se entrenan cuatro arquitecturas mediante transferencia de aprendizaje a
+partir de pesos preentrenados en ImageNet, en dos fases: primero con la base
+convolucional congelada para ajustar el clasificador, y después con
+descongelamiento parcial de las capas superiores y tasa de aprendizaje
+reducida. La Tabla~\ref{tab:hiperparametros} reúne la configuración
+propuesta, que se ajustará si el comportamiento de la curva de validación lo
+exige.
+
+\begin{longtable}{L{4.6cm}L{9.4cm}}
+\caption{Configuración propuesta para el entrenamiento.}
+\label{tab:hiperparametros} \\
+\toprule
+\textbf{Parámetro} & \textbf{Valor propuesto} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Parámetro} & \textbf{Valor propuesto} \\
+\midrule
+\endhead
+Arquitecturas evaluadas & MobileNetV2, MobileNetV3-Small, EfficientNet-B0 y ResNet-50 como referencia \\
+Resolución de entrada & $224\times224\times3$ \\
+Normalización & Media y desviación estándar de ImageNet \\
+Aumento de datos & Rotación, reflejo horizontal, recorte aleatorio y variación de brillo, contraste y tono; solo en entrenamiento \\
+Optimizador & Adam \\
+Tasa de aprendizaje & $10^{-3}$ en la primera fase; $10^{-5}$ en el ajuste fino \\
+Programación de la tasa & Reducción al estancarse la métrica de validación \\
+Tamaño de lote & 32 \\
+Detención temprana & Paciencia de 10 épocas sobre el F1 macro de validación \\
+Semillas aleatorias & Tres por arquitectura; se reporta media y desviación estándar \\
+Función de pérdida & Entropía cruzada categórica con ponderación por clase \\
+\bottomrule
+\end{longtable}
+
+\subsection{Cálculos de viabilidad computacional}
+\label{sec:calculos}
+
+Antes de construir el prototipo se verificó, mediante cálculo, que el modelo
+cabe en la plataforma seleccionada y que la latencia esperada deja margen
+suficiente frente al umbral de 500~ms.
+
+\paragraph{Tamaño del modelo cuantizado.} Para una red con $N_{\text{par}}$
+parámetros representados con $b$ bits, el tamaño aproximado es
+
+\begin{equation}
+T \approx \frac{N_{\text{par}} \cdot b}{8}.
+\label{eq:tamano}
+\end{equation}
+
+MobileNetV3-Small en su configuración de ancho 1.0 tiene 2.5 millones de
+parámetros \citep{howard2019}; con $b = 8$ se obtiene
+$T \approx 2.5$~MB, a los que se suma una pequeña sobrecarga de metadatos del
+formato. Frente a los 2~GB de memoria de la plataforma, el margen es de más
+de dos órdenes de magnitud.
+
+\paragraph{Latencia de inferencia esperada.} La medición de referencia
+disponible indica que el Raspberry Pi 5 ejecuta MobileNetV2 en 13.63~ms con
+cuatro hilos \citep{seeed2023bench}. Dado que MobileNetV2 requiere 300
+millones de operaciones de multiplicación y acumulación y MobileNetV3-Small
+únicamente 56 millones \citep{howard2019}, el rendimiento efectivo de la
+plataforma puede estimarse como
+
+\begin{equation}
+R = \frac{\mathrm{MAC}_{\text{ref}}}{t_{\text{ref}}}
+  = \frac{300 \times 10^{6}}{13.63 \times 10^{-3}\,\mathrm{s}}
+  \approx 22 \times 10^{9}\ \mathrm{MAC/s},
+\label{eq:rendimiento}
+\end{equation}
+
+\noindent de donde la latencia esperada del modelo propuesto resulta
+
+\begin{equation}
+t_{\text{inf}} \approx \frac{\mathrm{MAC}}{R}
+  = \frac{56 \times 10^{6}}{22 \times 10^{9}}
+  \approx 2.5\ \mathrm{ms}.
+\label{eq:latencia}
+\end{equation}
+
+Esta cifra es optimista, porque los modelos de menor tamaño aprovechan peor
+el paralelismo y la jerarquía de memoria. Aplicando un factor conservador de
+tres, la estimación de trabajo se sitúa alrededor de 8~ms, valor que de todas
+formas deja un margen amplio frente al umbral.
+
+\paragraph{Presupuesto de latencia extremo a extremo.} El umbral de H1d se
+refiere al tiempo por imagen percibido por el usuario, no únicamente a la
+inferencia. La Tabla~\ref{tab:presupuesto} desglosa el presupuesto previsto;
+la columna de valores medidos se completará durante las pruebas.
+
+\begin{longtable}{L{5.0cm}L{3.4cm}L{5.0cm}}
+\caption{Presupuesto de latencia extremo a extremo.}
+\label{tab:presupuesto} \\
+\toprule
+\textbf{Etapa} & \textbf{Estimación} & \textbf{Valor medido} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Etapa} & \textbf{Estimación} & \textbf{Valor medido} \\
+\midrule
+\endhead
+Captura y estabilización del enfoque & 150--250~ms & Por medir \\
+Preprocesamiento & 10--20~ms & Por medir \\
+Inferencia & $\approx$ 8~ms & Por medir \\
+Umbral, presentación y registro & $<$ 10~ms & Por medir \\
+\midrule
+\textbf{Total estimado} & \textbf{180--290~ms} & \textbf{Por medir} \\
+\textbf{Umbral de H1d} & \textbf{500~ms} & \\
+\bottomrule
+\end{longtable}
+
+El resultado del cálculo es relevante para el diseño: la etapa dominante no
+es la inferencia sino la captura de la imagen, de modo que el margen frente
+al umbral depende más del comportamiento del enfoque automático que de la
+arquitectura del modelo. Esto confirma la conclusión de la sección~3.2 sobre
+el papel secundario de la capacidad de cómputo en la selección de la
+plataforma.
+
+\paragraph{Memoria de trabajo.} El consumo de memoria durante la inferencia
+se compone del modelo, los tensores intermedios y el entorno de ejecución. El
+tensor de activación más grande corresponde a las primeras capas; para una
+entrada de $224\times224$ con 16 canales en formato int8 se obtienen
+aproximadamente 0.8~MB, y el área de trabajo completa se mantiene en el orden
+de decenas de megabytes. Sumando el intérprete y el entorno de Python, el
+consumo esperado es de algunas centenas de megabytes, holgadamente por debajo
+de los 2~GB disponibles.
+
+\paragraph{Energía por inferencia.} Conforme a la expresión presentada en el
+capítulo~2, la energía consumida por inferencia es
+$E = \bar{P} \cdot t_{\text{inf}}$. Con una potencia media provisional de
+7~W durante la inferencia y la latencia estimada de 8~ms se obtiene
+$E \approx 56$~mJ por imagen. Este valor es únicamente orientativo: la
+potencia real se medirá en la alimentación del dispositivo durante las
+pruebas, y es el valor medido el que se reportará.
+
+\paragraph{Almacenamiento.} El sistema operativo en su versión reducida ocupa
+unos pocos gigabytes, el modelo menos de 5~MB y los registros de inferencia
+un volumen despreciable. Reservando espacio para las imágenes del conjunto
+local y para copias del modelo entre iteraciones, la capacidad de 32~GB de la
+memoria seleccionada es suficiente.
+
+\subsection{Diseño del software}
+
+El programa se organiza en módulos independientes, de manera que cada uno
+pueda probarse por separado y que el modelo pueda sustituirse sin modificar
+el resto del sistema, conforme a RNF-04. La
+Tabla~\ref{tab:modulos} describe la organización propuesta.
+
+\begin{longtable}{L{3.6cm}L{10.4cm}}
+\caption{Organización modular del software.}
+\label{tab:modulos} \\
+\toprule
+\textbf{Módulo} & \textbf{Responsabilidad} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Módulo} & \textbf{Responsabilidad} \\
+\midrule
+\endhead
+\texttt{captura} & Configurar la cámara con parámetros fijos y obtener la imagen \\
+\texttt{preproceso} & Redimensionar, convertir el espacio de color y normalizar \\
+\texttt{inferencia} & Cargar el modelo cuantizado, ejecutar el intérprete y devolver el vector de probabilidades \\
+\texttt{decision} & Aplicar el umbral $\tau$ y resolver entre variedad identificada y no reconocida \\
+\texttt{interfaz} & Presentar el resultado al usuario \\
+\texttt{registro} & Almacenar marca de tiempo, predicción, confianza y tiempos por etapa \\
+\texttt{config} & Centralizar rutas, parámetros de cámara, umbral y versión del modelo \\
+\bottomrule
+\end{longtable}
+
+El flujo principal del programa se resume en el siguiente pseudocódigo.
+
+\begin{lstlisting}[language=Python, caption={Flujo principal del programa de
+inferencia.}, label={lst:flujo}]
+cargar configuracion y modelo cuantizado
+inicializar camara con parametros fijos
+mientras el sistema este activo:
+    esperar solicitud de identificacion
+    t0 <- tiempo actual
+    imagen <- capturar()
+    t1 <- tiempo actual
+    tensor <- preprocesar(imagen)       # 224x224, normalizacion
+    t2 <- tiempo actual
+    p <- inferir(tensor)                # vector de probabilidades
+    t3 <- tiempo actual
+    si max(p) >= umbral:
+        resultado <- (clase con mayor p, max(p))
+    si no:
+        resultado <- ("variedad no reconocida", max(p))
+    mostrar(resultado)
+    registrar(resultado, t1-t0, t2-t1, t3-t2)
+\end{lstlisting}
+
+La separación de los tiempos por etapa no es accesoria: es la que permite
+construir la columna de valores medidos de la
+Tabla~\ref{tab:presupuesto} sin instrumentación externa.
+
+\subsection{Diseño de la interfaz de resultado}
+
+La interfaz prevista tiene dos modos. El \textbf{modo de línea de comandos}
+se emplea durante el desarrollo y las mediciones, ya que permite ejecutar
+series de inferencias y volcar los tiempos directamente. El \textbf{modo de
+interfaz web local} se destina al uso en campo: el dispositivo expone una
+página en la red local donde se muestran la imagen capturada, la variedad
+identificada y el nivel de confianza, de modo que el usuario pueda consultar
+el resultado desde un teléfono sin instalar ninguna aplicación. Ambos modos
+comparten los mismos módulos de captura, inferencia y decisión.
+
+\subsection{Pruebas previas en computadora de escritorio}
+
+Mientras la plataforma embebida no esté disponible, el flujo completo se
+implementa y verifica en una computadora de escritorio utilizando el mismo
+código y el mismo modelo cuantizado, sustituyendo únicamente el módulo de
+captura por la lectura de imágenes desde archivo. Esta verificación previa
+permite validar la corrección del preprocesamiento, la equivalencia numérica
+entre el modelo en precisión completa y el cuantizado, el funcionamiento del
+umbral de rechazo y el formato del registro, de manera que al disponer del
+hardware el trabajo se concentre en la integración de la cámara y en las
+mediciones de desempeño, y no en la depuración de la lógica del programa.
+
+% =====================================================================
+\section{Construcción e implementación del prototipo}
+% =====================================================================
+
+Esta sección describe cómo el diseño se convierte en un prototipo funcional.
+Se presenta el plan de construcción por etapas y el registro de iteraciones;
+la evidencia fotográfica, los valores de calibración obtenidos y los cambios
+efectuados respecto del diseño inicial se incorporarán conforme avancen las
+pruebas.
+
+\pendiente{Secciones 3.4.1 a 3.4.5: sustituir el plan por la descripción de
+lo efectivamente realizado, e incorporar fotografías del montaje, valores de
+calibración y los problemas detectados con su solución.}
+
+\subsection{Preparación de la plataforma}
+
+La preparación comprende la escritura del sistema operativo en su versión
+reducida sobre la memoria microSD, con la red inalámbrica y el acceso remoto
+configurados desde la herramienta oficial de instalación, de modo que el
+dispositivo opere sin monitor ni teclado. Se trabaja sin entorno gráfico de
+manera deliberada: un escritorio activo en segundo plano compite por el
+procesador y altera las mediciones de latencia. A continuación se instalan el
+entorno de ejecución de inferencia, las bibliotecas de cámara y las
+dependencias del programa, y se registran las versiones exactas de cada
+componente para dar cumplimiento a RNF-05.
+
+\subsection{Integración del subsistema de adquisición}
+
+El módulo de cámara se conecta al conector MIPI CSI mediante el cable
+correspondiente a la plataforma y se verifica su funcionamiento con una
+captura de prueba. Posteriormente se fija la distancia de trabajo mediante un
+soporte, se desactivan los ajustes automáticos de exposición y balance de
+blancos, y se documentan los valores empleados. También se instala la
+disipación activa, cuya ausencia produciría estrangulamiento térmico durante
+las pruebas de carga prolongada y, con ello, mediciones de latencia que
+reflejarían el calentamiento del procesador y no el desempeño del modelo.
+
+\subsection{Implementación del software}
+
+Los módulos definidos en la sección~3.3.6 se implementan y prueban de forma
+individual antes de integrarse. El código se mantiene bajo control de
+versiones en el repositorio del proyecto, junto con las listas de archivos de
+cada partición y los parámetros de configuración, de manera que cualquier
+resultado reportado pueda asociarse a una versión concreta del sistema.
+
+\subsection{Calibración}
+
+La calibración comprende tres procedimientos. El \textbf{umbral de rechazo
+$\tau$} se determina sobre la partición de validación de los conjuntos
+públicos, fijándolo en el valor que acepta al menos el 95\,\% de las
+predicciones correctas, y queda establecido antes de cualquier contacto con
+el conjunto local para no sesgar la evaluación de H1c. Los \textbf{parámetros
+de cámara} —distancia, exposición y balance de blancos— se ajustan
+comparando capturas propias con las imágenes de los conjuntos públicos, con
+el objetivo de reducir la diferencia de apariencia entre ambos dominios.
+Finalmente, la \textbf{equivalencia numérica} entre el modelo en precisión
+completa y el cuantizado se verifica sobre la misma partición de prueba, lo
+que permite cuantificar la pérdida exigida por RD-05.
+
+\pendiente{Registrar los valores finales de $\tau$, los parámetros de cámara
+empleados y la pérdida por cuantización medida.}
+
+\subsection{Integración y pruebas parciales}
+
+Cada subsistema se verifica antes de las pruebas completas, en el orden
+siguiente: captura de imagen, preprocesamiento, inferencia sobre imágenes
+conocidas, aplicación del umbral y, por último, el flujo completo con
+registro de tiempos. La Tabla~\ref{tab:iteraciones} presenta las iteraciones
+previstas del prototipo.
+
+\begin{longtable}{L{1.5cm}L{5.2cm}L{6.9cm}}
+\caption{Iteraciones previstas del prototipo.}
+\label{tab:iteraciones} \\
+\toprule
+\textbf{Versión} & \textbf{Implementación principal} & \textbf{Propósito} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Versión} & \textbf{Implementación principal} & \textbf{Propósito} \\
+\midrule
+\endhead
+v1 & Flujo completo en computadora de escritorio & Verificar preprocesamiento, inferencia y umbral sin depender del hardware \\
+v2 & Plataforma preparada e inferencia desde archivo & Comprobar la ejecución del modelo cuantizado en el dispositivo y medir la latencia de inferencia \\
+v3 & Integración de la cámara & Obtener imágenes propias y ajustar los parámetros de captura \\
+v4 & Flujo completo con registro de tiempos & Medir la latencia extremo a extremo y completar la Tabla~\ref{tab:presupuesto} \\
+v5 & Interfaz web local y prueba de carga prolongada & Habilitar el uso en campo y caracterizar el comportamiento térmico y energético \\
+\bottomrule
+\end{longtable}
+
+Para cada versión se documentará el problema detectado, la modificación
+realizada y la razón técnica del cambio, de modo que el capítulo refleje el
+proceso de desarrollo y no únicamente la descripción del prototipo final.
+
+% =====================================================================
+\section{Presentación de la solución desarrollada}
+% =====================================================================
+
+Esta sección presenta el resultado del proceso de diseño y construcción: qué
+solución se obtuvo, cómo funciona y cuáles son sus características. La
+evaluación de qué tan bien funciona corresponde al capítulo de resultados.
+
+\pendiente{Completar con fotografías y vistas del prototipo final,
+dimensiones y peso del conjunto, la arquitectura definitiva y las
+características medidas, una vez concluidas las iteraciones.}
+
+\subsection{Descripción de la solución}
+
+La solución consiste en un sistema embebido autónomo que identifica la
+variedad de una hoja de vid a partir de su imagen. El dispositivo captura la
+hoja con una cámara de enfoque automático, preprocesa la imagen con los
+mismos parámetros empleados durante el entrenamiento, ejecuta localmente un
+modelo convolucional ligero cuantizado a enteros de 8 bits y aplica un umbral
+de confianza sobre la salida. Si la confianza supera el umbral, presenta la
+variedad identificada y el valor de confianza asociado; en caso contrario,
+reporta que la variedad no es reconocida, lo que evita asignar una etiqueta
+incorrecta a una muestra que el modelo nunca vio durante el entrenamiento.
+Cada operación queda registrada con su marca de tiempo y con los tiempos de
+cada etapa, información que alimenta la caracterización del capítulo
+siguiente. Todo el proceso ocurre en el dispositivo, sin conexión a internet
+ni equipo externo.
+
+\subsection{Ficha técnica}
+
+La Tabla~\ref{tab:ficha} resume las características de la solución. Las
+celdas marcadas corresponden a valores que se determinarán al completar las
+iteraciones del prototipo.
+
+\begin{longtable}{L{4.6cm}L{9.4cm}}
+\caption{Ficha técnica de la solución desarrollada.}
+\label{tab:ficha} \\
+\toprule
+\textbf{Característica} & \textbf{Descripción} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Característica} & \textbf{Descripción} \\
+\midrule
+\endhead
+Tipo de sistema & Sistema embebido de clasificación de imágenes, de operación autónoma \\
+Plataforma de cómputo & Computadora de placa única con procesador de cuatro núcleos y 2~GB de memoria \citep{rpi5specs} \\
+Adquisición & Módulo de cámara de 12~MP con enfoque automático, interfaz MIPI CSI \citep{rpicam3} \\
+Modelo & Red convolucional ligera con transferencia de aprendizaje, cuantizada a int8 \\
+Entorno de inferencia & TensorFlow Lite \\
+Entrada del modelo & Imagen RGB de $224\times224$ \\
+Mecanismo de rechazo & Umbral sobre la probabilidad máxima de la salida softmax \\
+Presentación & Línea de comandos e interfaz web en red local \\
+Datos registrados & Marca de tiempo, predicción, confianza y tiempos por etapa \\
+Alimentación & Fuente USB-C de 5~V y 5~A; admite batería portátil compatible \\
+Variedades reconocidas & Determinadas por la cobertura de los conjuntos públicos; Misión únicamente se rechaza \\
+Latencia extremo a extremo & Por determinar \\
+Consumo durante la inferencia & Por determinar \\
+Dimensiones y peso del conjunto & Por determinar \\
+\bottomrule
+\end{longtable}
+
+\subsection{Relación entre requerimientos e implementación}
+
+La Tabla~\ref{tab:cobertura3} relaciona cada requerimiento con el elemento
+de la solución que lo implementa. Las verificaciones cuantitativas
+correspondientes a los requerimientos de desempeño se presentan en el
+capítulo de resultados.
+
+\begin{longtable}{L{2.9cm}L{5.0cm}L{5.8cm}}
+\caption{Relación entre requerimientos e implementación.}
+\label{tab:cobertura3} \\
+\toprule
+\textbf{Requerimiento} & \textbf{Implementación en la solución} & \textbf{Forma de verificación} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Requerimiento} & \textbf{Implementación en la solución} & \textbf{Forma de verificación} \\
+\midrule
+\endhead
+RF-01, RF-02 & Módulo de cámara con parámetros fijos y módulo de preproceso & Inspección de las capturas y comparación con el preproceso de entrenamiento \\
+RF-03 & Intérprete de inferencia local & Ejecución del sistema sin conexión a la red \\
+RF-04 & Módulo de decisión con umbral $\tau$ & Prueba con imágenes de Misión \\
+RF-05 & Interfaz de línea de comandos y web local & Inspección funcional \\
+RF-06 & Módulo de registro & Revisión del archivo de registro generado \\
+RD-01 a RD-03 & Modelo entrenado y umbral calibrado & Métricas sobre las particiones interna y local (capítulo 4) \\
+RD-04, RD-05 & Modelo cuantizado y registro de tiempos por etapa & Mediciones sobre el dispositivo (capítulo 4) \\
+RNF-01 & Inferencia local sin dependencias en línea & Prueba sin conectividad \\
+RNF-02 & Selección de la alternativa B & Suma de costos de los componentes \\
+RNF-03 & Disipación activa & Prueba de carga prolongada \\
+RNF-04 & Separación del módulo de inferencia y del archivo de configuración & Sustitución del modelo sin modificar otros módulos \\
+RNF-05 & Registro de versiones y parámetros en el repositorio & Revisión del repositorio \\
+\bottomrule
+\end{longtable}
+
+\subsection{Limitaciones conocidas de la solución}
+
+La solución presenta cuatro limitaciones derivadas del diseño. El conjunto de
+variedades reconocibles está acotado por la cobertura de los conjuntos
+públicos, de modo que Misión solo puede rechazarse y no identificarse
+positivamente. El sistema opera sobre hojas adultas fotografiadas
+individualmente y no sobre racimos, sarmientos ni imágenes de la planta
+completa. El desempeño depende de que las condiciones de captura se
+mantengan dentro del rango para el que se calibró el sistema. Y, por último,
+la solución está concebida como una herramienta de verificación preliminar
+que no sustituye al análisis molecular en los casos que requieran certeza
+legal o comercial.
+
+% =====================================================================
+\section*{Cierre del capítulo}
+\addcontentsline{toc}{section}{Cierre del capítulo}
+% =====================================================================
+
+En este capítulo se presentó el proceso de diseño y desarrollo del sistema
+embebido de identificación varietal. Se especificaron los requerimientos
+funcionales, de desempeño y no funcionales, derivados de los objetivos y las
+hipótesis del capítulo~1 y acompañados de criterios de aceptación
+verificables. Se aplicaron técnicas de generación de ideas para construir
+cuatro alternativas de solución, que se compararon mediante una matriz de
+decisión con criterios ponderados y calificaciones sustentadas en mediciones
+publicadas y precios de mercado; de esa comparación resultó seleccionada una
+computadora de placa única con cámara de enfoque automático y un modelo
+ligero cuantizado. Se describió el diseño detallado del sistema, incluidos los
+cálculos de tamaño del modelo, latencia esperada, memoria y energía, que
+confirmaron la viabilidad de la plataforma elegida y revelaron que la etapa
+dominante del tiempo de respuesta es la captura de la imagen y no la
+inferencia. Finalmente se presentó el plan de construcción del prototipo y
+las características de la solución.
+
+En el capítulo siguiente se presentan los resultados de las pruebas
+experimentales, el análisis de los indicadores de desempeño y la
+comprobación del cumplimiento de los objetivos y de las hipótesis.
